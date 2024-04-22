@@ -1,11 +1,11 @@
-# Load a mat file
+# data loading and data preprocessing files
 
 import scipy.io
 
 # Input format: {name1: [path1, path2, ...], name2: [path1, path2, ...], ...}
 # output format: {name1/matfilename1:
 #                  {'__header__': string, '__version__': string, '__globals__': list, ['EEG' or 'ECoG']: numpy array},
-#                 name1/matfilename2: ...}
+#                   name1/matfilename2: ...}}
 def loadMatFile(paths):
   data = {}
   for path in paths.keys():
@@ -43,9 +43,9 @@ if __name__ == "__main__":
     ],
   }
 
-  # output format: {name1/matfilename1:
-  #                  {'__header__': string, '__version__': string, '__globals__': list, ['EEG' or 'ECoG']: numpy array},
-  #                 name1/matfilename2: ...}
+  # data format: {name1/matfilename1:
+#                  {'__header__': string, '__version__': string, '__globals__': list, ['EEG' or 'ECoG']: numpy array},
+#                    name1/matfilename2: ...}}
   data = loadMatFile(PATHS)
 
   print(data)
