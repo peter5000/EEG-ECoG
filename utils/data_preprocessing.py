@@ -4,7 +4,7 @@ import scipy.io
 
 # Input format: {name1: [path1, path2, ...], name2: [path1, path2, ...], ...}
 # output format: {name1/matfilename1:
-#                  {'__header__': string, '__version__': string, '__globals__': list, ['EEG' or 'ECoG']: numpy array},
+#                  {'__header__': string, '__version__': string, '__globals__': list, ['EEG' or 'ECoG']: numpy.ndarray},
 #                   name1/matfilename2: ...}}
 def loadMatFile(paths):
   data = {}
@@ -44,7 +44,7 @@ if __name__ == "__main__":
   }
 
   # data format: {name1/matfilename1:
-#                  {'__header__': string, '__version__': string, '__globals__': list, ['EEG' or 'ECoG']: numpy array},
+#                  {'__header__': string, '__version__': string, '__globals__': list, ['EEG' or 'ECoG']: numpy.ndarray},
 #                    name1/matfilename2: ...}}
   data = loadMatFile(PATHS)
 
