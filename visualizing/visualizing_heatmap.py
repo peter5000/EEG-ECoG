@@ -9,7 +9,7 @@ mat_data = h5py.File('ECoG06_anesthesia.mat', 'r') # replace with your path of t
 # Check the variables present in the .mat file
 print('the variables present in the .mat file is ' + list(mat_data.keys()))
 # Extract the data and convert it to a DataFrame
-data = mat_data['WaveData'][:, :10000] 
+data = mat_data['WaveData'][:, :10000]
 
 # Convert the data to a DataFrame
 ECoG06_anesthesia_1k_csv_df = pd.DataFrame(data)
