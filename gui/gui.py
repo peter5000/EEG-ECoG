@@ -10,6 +10,10 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
 from mpl_toolkits.mplot3d import Axes3D
+from matplotlib.cm import ScalarMappable
+from matplotlib.colors import Normalize
+import mne
+from mne.datasets import sample
 import numpy as np
 
 class GraphWindow(QMainWindow):
@@ -33,7 +37,7 @@ class GraphWindow(QMainWindow):
         # Create the Temperature-Entropy (TS) tab
         self.graph_tab = QWidget()
         self.graph_figure = plt.figure()
-        self.graph_ax = self.graph_figure.add_subplot(111, projection = '3d')
+        self.graph_ax = self.graph_figure.add_subplot(111)
         self.graph_canvas = FigureCanvas(self.graph_figure)
         self.graph_title = ''
         self.conversion = ''
@@ -41,7 +45,7 @@ class GraphWindow(QMainWindow):
 
         self.current_button_mat = None
 
-        # self.graph_canvas.setMinimumSize(500, 500)
+        self.graph_canvas.setMinimumSize(500, 500)
         self.layout_graphtab = QVBoxLayout(self.graph_tab)
         self.layout_graphtab.addWidget(self.graph_canvas)
  
@@ -66,6 +70,7 @@ class GraphWindow(QMainWindow):
         self.init_graph_tab()
         self.init_more_tab()
         self.init_inputs_section()
+        self.plot_graph()
 
     ## MAIN GRAPH
     def init_graph_tab(self):
@@ -101,99 +106,169 @@ class GraphWindow(QMainWindow):
         # webbrowser.open(url, new=2)  # 'new=2' opens the URL in a new browser window or tab
         QDesktopServices.openUrl(QUrl(url))
     
-    def update_graph(self):
-        if not self.conversion:
-            return
-        
-        self.title = self.conversion
+    def plot_graph(self):
+        # Suppress MNE-Python verbose output
+        mne.set_log_level(verbose='ERROR')
 
-        # Retrieve current input values
-        self.current_nX = int(self.x_input_boxes[2].text()) if self.x_input_boxes[2].text() else 100
-        self.current_nY = int(self.y_input_boxes[2].text()) if self.y_input_boxes[2].text() else 100
-        self.current_Xmin = np.double(self.x_input_boxes[0].text()) if self.x_input_boxes[0].text() else 0
-        self.current_Xmax = np.double(self.x_input_boxes[1].text()) if self.x_input_boxes[1].text() else 400
-        self.current_Ymin = np.double(self.y_input_boxes[0].text()) if self.y_input_boxes[0].text() else 240
-        self.current_Ymax = np.double(self.y_input_boxes[1].text()) if self.y_input_boxes[1].text() else 270
+        data_path = sample.data_path()
+        subjects_dir = data_path / "subjects"
+        sample_dir = data_path / "MEG" / "sample"
+
+        # Add source information
+        brain_kwargs = dict(alpha=0.1, background="white", cortex="low_contrast")
+        brain = mne.viz.Brain("sample", subjects_dir=subjects_dir, **brain_kwargs)
+
+        stc = mne.read_source_estimate(sample_dir / "sample_audvis-meg")
+        stc.crop(0.09, 0.1)
+
+        kwargs = dict(
+            fmin=stc.data.min(),
+            fmax=stc.data.max(),
+            alpha=0.25,
+            smoothing_steps="nearest",
+            time=stc.times,
+        )
+        brain.add_data(stc.lh_data, hemi="lh", vertices=stc.lh_vertno, **kwargs)
+        brain.add_data(stc.rh_data, hemi="rh", vertices=stc.rh_vertno, **kwargs)
+
+        # Modify the view of the brain
+        brain.show_view(azimuth=190, elevation=70, distance=350, focalpoint=(0, 0, 20))
+
+        # Highlight a region on the brain
+        brain.add_label("BA44", hemi="lh", color="green", borders=True)
+        brain.show_view(azimuth=190, elevation=70, distance=350, focalpoint=(0, 0, 20))
+
+        # Include the head in the image
+        brain.add_head(alpha=0.5)
+
+        # Add sensors positions
+        evoked = mne.read_evokeds(sample_dir / "sample_audvis-ave.fif", verbose=False)[0]
+        trans = mne.read_trans(sample_dir / "sample_audvis_raw-trans.fif")
+        brain.add_sensors(evoked.info, trans)
+        brain.show_view(distance=500)
+
+        # Add current dipoles
+        dip = mne.read_dipole(sample_dir / "sample_audvis_set1.dip")
+        cmap = plt.get_cmap("YlOrRd")
+        colors = [cmap(gof / dip.gof.max()) for gof in dip.gof]
+        brain.add_dipole(dip, trans, colors=colors, scales=list(dip.amplitude * 1e8))
+        brain.show_view(azimuth=-20, elevation=60, distance=300)
+
+        # print(brain.data)
+
+        # Extract left hemisphere data and vertices
+        lh_data = brain.data['lh']['array']
+        lh_vertices = brain.data['lh']['vertices']
+
+        # Extract right hemisphere data and vertices
+        rh_data = brain.data['rh']['array']
+        rh_vertices = brain.data['rh']['vertices']
+
+        # print("Left Hemisphere Vertices Shape:", lh_vertices.shape)
+        # print("Right Hemisphere Vertices Shape:", rh_vertices.shape)
+
+        # Create a screenshot for exporting the brain image
+        img = brain.screenshot()
+
+        # Clear the axis to remove any previous content
+        self.graph_ax.clear()
+
+        # Display the screenshot on the canvas
+        self.graph_ax.imshow(img)
+
+    # def update_graph(self):
+    #     if not self.conversion:
+    #         return
         
-        # If values haven't been changed
-        if (self.current_nX, self.current_nY, self.current_Xmin, self.current_Xmax,
-            self.current_Ymin, self.current_Ymax) == (self.prev_nX, self.prev_nY,
-            self.prev_Xmin, self.prev_Xmax, self.prev_Ymin, self.prev_Ymax):
-            # And if material hasn't been changed
-            if self.conversion == self.prev_conversion:
-                return
+    #     self.title = self.conversion
+
+    #     # Retrieve current input values
+    #     self.current_nX = int(self.x_input_boxes[2].text()) if self.x_input_boxes[2].text() else 100
+    #     self.current_nY = int(self.y_input_boxes[2].text()) if self.y_input_boxes[2].text() else 100
+    #     self.current_Xmin = np.double(self.x_input_boxes[0].text()) if self.x_input_boxes[0].text() else 0
+    #     self.current_Xmax = np.double(self.x_input_boxes[1].text()) if self.x_input_boxes[1].text() else 400
+    #     self.current_Ymin = np.double(self.y_input_boxes[0].text()) if self.y_input_boxes[0].text() else 240
+    #     self.current_Ymax = np.double(self.y_input_boxes[1].text()) if self.y_input_boxes[1].text() else 270
         
-        # Update previous values with current values
-        self.prev_nX = self.current_nX if self.current_nX else None
-        self.prev_nY = self.current_nY if self.current_nY else None
-        self.prev_Xmin = self.current_Xmin if self.current_Xmin else None
-        self.prev_Xmax = self.current_Xmax if self.current_Xmax else None
-        self.prev_Ymin = self.current_Ymin if self.current_Ymin else None
-        self.prev_Ymax = self.current_Ymax if self.current_Ymax else None
+    #     # If values haven't been changed
+    #     if (self.current_nX, self.current_nY, self.current_Xmin, self.current_Xmax,
+    #         self.current_Ymin, self.current_Ymax) == (self.prev_nX, self.prev_nY,
+    #         self.prev_Xmin, self.prev_Xmax, self.prev_Ymin, self.prev_Ymax):
+    #         # And if material hasn't been changed
+    #         if self.conversion == self.prev_conversion:
+    #             return
         
-        invalid_currents = (self.current_Xmin == None or self.current_Xmax == None) or (
-                            self.current_Ymin == None or self.current_Ymax == None or (
-                            self.current_nX == None) or (self.current_nY == None))
+    #     # Update previous values with current values
+    #     self.prev_nX = self.current_nX if self.current_nX else None
+    #     self.prev_nY = self.current_nY if self.current_nY else None
+    #     self.prev_Xmin = self.current_Xmin if self.current_Xmin else None
+    #     self.prev_Xmax = self.current_Xmax if self.current_Xmax else None
+    #     self.prev_Ymin = self.current_Ymin if self.current_Ymin else None
+    #     self.prev_Ymax = self.current_Ymax if self.current_Ymax else None
         
-        match self.conversion:
-            case 'EEG -> EcoG':
-                valid_nums = (0 <= self.current_Pmin <= self.current_Pmax <= 400
-                                and 1 <= self.current_Tmin <= self.current_Tmax <= 301)
-                if not valid_nums or invalid_currents:
-                    return
-            case 'EcoG -> EEG':
-                valid_nums = (0 <= self.current_Pmin <= self.current_Pmax <= 900
-                                and 0 <= self.current_Tmin <= self.current_Tmax <= 270)
-                if not valid_nums or invalid_currents:
-                    return
+    #     invalid_currents = (self.current_Xmin == None or self.current_Xmax == None) or (
+    #                         self.current_Ymin == None or self.current_Ymax == None or (
+    #                         self.current_nX == None) or (self.current_nY == None))
+        
+    #     match self.conversion:
+    #         case 'EEG -> EcoG':
+    #             valid_nums = (0 <= self.current_Pmin <= self.current_Pmax <= 400
+    #                             and 1 <= self.current_Tmin <= self.current_Tmax <= 301)
+    #             if not valid_nums or invalid_currents:
+    #                 return
+    #         case 'EcoG -> EEG':
+    #             valid_nums = (0 <= self.current_Pmin <= self.current_Pmax <= 900
+    #                             and 0 <= self.current_Tmin <= self.current_Tmax <= 270)
+    #             if not valid_nums or invalid_currents:
+    #                 return
             
-        # Define the PT conditions
-        if (self.current_Pmin and self.current_Pmax and self.current_nP) and (self.current_Tmin and self.current_Tmax and self.current_nT):
-            X = np.arange(self.current_Pmin, self.current_Pmax, (self.current_Pmax-self.current_Pmin)/self.current_nP)
-            Y = np.arange(self.current_Tmin, self.current_Tmax, (self.current_Tmax-self.current_Tmin)/self.current_nT)
-            Z = np.array([X, Y], dtype='object')
+    #     # Define the PT conditions
+    #     if (self.current_Pmin and self.current_Pmax and self.current_nP) and (self.current_Tmin and self.current_Tmax and self.current_nT):
+    #         X = np.arange(self.current_Pmin, self.current_Pmax, (self.current_Pmax-self.current_Pmin)/self.current_nP)
+    #         Y = np.arange(self.current_Tmin, self.current_Tmax, (self.current_Tmax-self.current_Tmin)/self.current_nT)
+    #         Z = np.array([X, Y], dtype='object')
         
-        if self.current_nP == 1 or self.current_nT == 1:
-            # Replace the existing axis (if it's 3D)
-            if isinstance(self.graph_ax, Axes3D):
-                self.graph_ax.remove()
-                self.graph_ax = self.graph_figure.add_subplot(111)
-                self.graph_ax.clear()
-            elif isinstance(self.graph_ax, Axes):
-                self.graph_ax.clear()
-            self.graph_figure.set_size_inches(7, 7)
-            self.graph_figure.subplots_adjust(left=0.2, right=1, bottom=0.2, top=0.9)
-            if self.current_nP == 1:
-                self.graph_ax.plot(Y, Z)  # Plot temperature vs. data
-                self.graph_ax.set_xlabel('Y', fontsize=10, labelpad=10)
-                self.graph_ax.set_ylabel(self.conversion, fontsize=10, labelpad=10)
-            elif self.current_nT == 1:
-                self.graph_ax.plot(X, Z)  # Plot pressure vs. data
-                self.graph_ax.set_xlabel('X', fontsize=10, labelpad=10)
-                self.graph_ax.set_ylabel(self.mat, fontsize=10, labelpad=10)
-            else:
-                return
-            self.graph_ax.set_title(self.title)
-            self.graph_canvas.draw()
-        else:
-            # Replace the existing axis (if it's 2D)
-            if isinstance(self.graph_ax, Axes):
-                self.graph_ax.remove()
-                self.graph_ax = self.graph_figure.add_subplot(111, projection='3d')
-                self.graph_ax.clear()
-            elif isinstance(self.graph_ax, Axes3D):
-                self.graph_ax.clear()
-            # Create a grid of P and T values for the surface plot
-            X_grid, Y_grid = np.meshgrid(X, Y)
-            self.graph_figure.set_size_inches(7, 7)
-            self.graph_figure.subplots_adjust(left=0.1, right=1, bottom=0.1, top=0.9)
-            self.graph_ax.plot_surface(X_grid, Y_grid, Z, cmap='viridis')
-            self.graph_ax.set_xlabel('X', fontsize=10, labelpad=10)
-            self.graph_ax.set_ylabel('Y', fontsize=10, labelpad=10)
-            self.graph_ax.set_zlabel('Z', fontsize=10, labelpad=10)
-            self.graph_ax.set_title(self.graph_title, fontsize = 12)
-            self.graph_canvas.draw()
-        self.points = list(zip(X.ravel(), Y.ravel(), Z.ravel()))
+    #     if self.current_nP == 1 or self.current_nT == 1:
+    #         # Replace the existing axis (if it's 3D)
+    #         if isinstance(self.graph_ax, Axes3D):
+    #             self.graph_ax.remove()
+    #             self.graph_ax = self.graph_figure.add_subplot(111)
+    #             self.graph_ax.clear()
+    #         elif isinstance(self.graph_ax, Axes):
+    #             self.graph_ax.clear()
+    #         self.graph_figure.set_size_inches(7, 7)
+    #         self.graph_figure.subplots_adjust(left=0.2, right=1, bottom=0.2, top=0.9)
+    #         if self.current_nP == 1:
+    #             self.graph_ax.plot(Y, Z)  # Plot temperature vs. data
+    #             self.graph_ax.set_xlabel('Y', fontsize=10, labelpad=10)
+    #             self.graph_ax.set_ylabel(self.conversion, fontsize=10, labelpad=10)
+    #         elif self.current_nT == 1:
+    #             self.graph_ax.plot(X, Z)  # Plot pressure vs. data
+    #             self.graph_ax.set_xlabel('X', fontsize=10, labelpad=10)
+    #             self.graph_ax.set_ylabel(self.mat, fontsize=10, labelpad=10)
+    #         else:
+    #             return
+    #         self.graph_ax.set_title(self.title)
+    #         self.graph_canvas.draw()
+    #     else:
+    #         # Replace the existing axis (if it's 2D)
+    #         if isinstance(self.graph_ax, Axes):
+    #             self.graph_ax.remove()
+    #             self.graph_ax = self.graph_figure.add_subplot(111, projection='3d')
+    #             self.graph_ax.clear()
+    #         elif isinstance(self.graph_ax, Axes3D):
+    #             self.graph_ax.clear()
+    #         # Create a grid of P and T values for the surface plot
+    #         X_grid, Y_grid = np.meshgrid(X, Y)
+    #         self.graph_figure.set_size_inches(7, 7)
+    #         self.graph_figure.subplots_adjust(left=0.1, right=1, bottom=0.1, top=0.9)
+    #         self.graph_ax.plot_surface(X_grid, Y_grid, Z, cmap='viridis')
+    #         self.graph_ax.set_xlabel('X', fontsize=10, labelpad=10)
+    #         self.graph_ax.set_ylabel('Y', fontsize=10, labelpad=10)
+    #         self.graph_ax.set_zlabel('Z', fontsize=10, labelpad=10)
+    #         self.graph_ax.set_title(self.graph_title, fontsize = 12)
+    #         self.graph_canvas.draw()
+    #     self.points = list(zip(X.ravel(), Y.ravel(), Z.ravel()))
 
     def update_conversion(self, index):
         conv = self.dropdown.currentText()
@@ -322,7 +397,7 @@ class GraphWindow(QMainWindow):
         self.update_button = QPushButton("Update Graph")
         self.update_button.setStyleSheet("border-radius: 5px; border: 1px solid gray")
         self.update_button.setFixedWidth(100)
-        self.update_button.clicked.connect(self.update_graph)
+        self.update_button.clicked.connect(self.plot_graph)
         hbox_update_button.addWidget(self.update_button)
         inputs_layout.addSpacing(-50)
         inputs_layout.addLayout(hbox_update_button)
