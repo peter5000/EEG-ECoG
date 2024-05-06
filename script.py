@@ -2,6 +2,7 @@ import sys
 sys.path.append('C:/Users/chans/Documents/UW/2023_2024/SP24/CSE_481F/EEG-ECoG')
 from utils import data_preprocessing as dp
 from visualizing import graphs as gp
+import matplotlib.pyplot as plt
 import numpy as np
 
 # PCA sanity check
