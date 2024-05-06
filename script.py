@@ -4,6 +4,15 @@ from utils import data_preprocessing as dp
 from visualizing import graphs as gp
 import numpy as np
 
+# PCA sanity check
+signal = np.random.normal(scale=2.0, size=(1,100))
+signal2 = np.random.normal(scale=0.5, size=(1,100))
+
+sum_signal = np.vstack((signal, signal2))
+result, mean_result = dp.pca(sum_signal.T)
+
+fig, ax = plt.subplots(1,3, figsize= (15, 15))
+
 ecog_fp = '../Datasets/20120123S11_EEGECoG_Su_Oosugi_ECoG256-EEG17/20120123S11_EEGECoG_Su_Oosugi_ECoG256-EEG17_mat/ECoG_rest.mat'
 eeg_fp = '../Datasets/20120123S11_EEGECoG_Su_Oosugi_ECoG256-EEG17/20120123S11_EEGECoG_Su_Oosugi_ECoG256-EEG17_mat/EEG_rest.mat'
 ecog_data = dp.loadMatFile({"ecog_fp": [ecog_fp]})['20120123S11_EEGECoG_Su_Oosugi_ECoG256-EEG17_mat/ECoG_rest.mat']
@@ -16,7 +25,7 @@ eeg_channel = eeg_data.shape[0]
 ecog_fs = 1000
 eeg_fs = 1000
 
-data, recon_data = dp.pca(eeg_data.T, 10)
+data, recon_data = dp.pca(eeg_data.T, 2)
 
 print(recon_data.shape)
 print(data.shape)
@@ -36,6 +45,9 @@ gp.graphAllChannels(data.T, 17, eeg_data.shape[1])
 
 gp.graphAllChannels(recon_data.T, 17, eeg_data.shape[1])
 
+ecog_data_pca, recon_ecog_data = dp.pca(ecog_data.T, 200)
+gp.graphAllChannels(ecog_data_pca.T, 20, ecog_data.shape[1])
+gp.graphAllChannels(recon_ecog_data.T, 20, ecog_data.shape[1])
 
 # print(eeg_backto_pca)
 # print("--------------------------")

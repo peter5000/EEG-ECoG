@@ -28,23 +28,35 @@ def loadMatFile(paths):
                 ValueError('could not read at all...')
     return data
 
-# PCA: data = (sample, features)
-def pca(data, n_comp):
-    mean = np.mean(data, axis=0)
-    print("Mean ", mean.shape)
+# PCA
+# data: (|samples|, |features|)
+def pca(data, n_comp=2):
+    mean = np.mean(data, axis=0)   # (|features|, )
     mean_data = data - mean
-    print("Data after subtracting mean ", data.shape, "\n")
 
-    cov = np.cov(mean_data.T)
+    std = np.std(data, axis=0)
+    z_score = mean_data / std
+
+    cov = np.cov(mean_data.T)      # (x, x) s.t. x = num_components = min(|sample|, |features|)
     cov = np.round(cov, 2)
-    print("Covariance matrix ", cov.shape, "\n")
 
+    z_cov = np.cov(z_score.T)      # (x, x) s.t. x = num_components = min(|sample|, |features|)
+    z_cov = np.round(z_cov, 2)
+
+    # eig_val: (|num_components|, )
+    # eig_vec: (|features|, |num_components|)
     eig_val, eig_vec = np.linalg.eig(cov)
+    z_eig_val, z_eig_vec = np.linalg.eig(z_cov)
 
+    # Sorting eig_vecs from smallest eiv_val to largest
     indices = np.arange(0,len(eig_val), 1)
     indices = ([x for _,x in sorted(zip(eig_val, indices))])[::-1]
     eig_val = eig_val[indices]
     eig_vec = eig_vec[:,indices]
+    z_indices = np.arange(0,len(z_eig_val), 1)
+    z_indices = ([x for _,x in sorted(zip(z_eig_val, z_indices))])[::-1]
+    z_eig_val = z_eig_val[z_indices]
+    z_eig_vec = z_eig_vec[:,z_indices]
 
     # Get explained variance
     sum_eig_val = np.sum(eig_val)
@@ -61,13 +73,15 @@ def pca(data, n_comp):
     plt.show()
 
     ## We will 2 components
-    n_comp = 17
     eig_vec = eig_vec[:,:n_comp]
     print(eig_vec.shape)
 
     # Take transpose of eigen vectors with data
     pca_data = mean_data.dot(eig_vec)
     print("Transformed data ", pca_data.shape)
+
+    pca_data2 = z_score.dot(z_eig_vec)
+    print("Transformed data 2 ", pca_data2.shape)
 
     # Plot data
 
@@ -137,7 +151,7 @@ def pca(data, n_comp):
     # train = pca.inverse_transform
     # test = pca.inverse_transform
 
-    return data, recon_data
+    return pca_data, pca_data2 # recon_data
 
 def z_score(X):
     # X: ndarray, shape (n_features, n_samples)
