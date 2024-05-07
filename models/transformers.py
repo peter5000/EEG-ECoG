@@ -5,53 +5,32 @@ import torch.optim as optim
 
 import math
 import numpy as np
-from positional_encodings.torch_encodings import PositionalEncoding1D, Summer
 
 class TransformerModel(nn.Module):
     def __init__(self, input_size, output_size):
         super(TransformerModel, self).__init__()
-        self.embedding_src = nn.Embedding(input_size, 512)
-        self.embedding_tgt = nn.Embedding(output_size, 512)
-        self.positional_encoder = PositionalEncoding(dim_model=input_size, dropout_p=0.1, max_len=5000)
-        self.transformer = nn.Transformer(d_model=512, nhead=8, num_encoder_layers=6, num_decoder_layers=6)
+        self.embedding_src = nn.Linear(input_size, 512)
+        self.positional_encoder = PositionalEncoding(dim_model=256, dropout_p=0.1, max_len=5000)
+        self.transformer = nn.Transformer(d_model=256, nhead=8, num_encoder_layers=6, num_decoder_layers=6)
         self.fc = nn.Linear(512, output_size)
 
-    def forward(self, src, tgt):
+    def generate_square_subsequent_mask(self, sz):
+        mask = (torch.triu(torch.ones(sz, sz)) == 1).transpose(0, 1)
+        mask = mask.float().masked_fill(mask == 0, float('-inf')).masked_fill(mask == 1, float(0.0))
+        return mask
+
+    def forward(self, src, tgt, tgt_mask):
         src = self.embedding_src(src)
-        tgt = self.embedding_tgt(tgt)
         src = self.self.positional_encoder(src)
-        output = self.transformer(src, tgt, tgt_mask=tgt_mask, src_key_padding_mask=src_pad_mask, tgt_key_padding_mask=tgt_pad_mask)
+        output = self.transformer(src, tgt, tgt_mask)
         output = self.fc(output)
         return output
-      
-    def get_tgt_mask(self, size) -> torch.tensor:
-        mask = torch.tril(torch.ones(size, size) == 1) # Lower triangular matrix
-        mask = mask.float()
-        mask = mask.masked_fill(mask == 0, float('-inf')) # Convert zeros to -inf
-        mask = mask.masked_fill(mask == 1, float(0.0)) # Convert ones to 0
-        
-        # EX for size=5:
-        # [[0., -inf, -inf, -inf, -inf],
-        #  [0.,   0., -inf, -inf, -inf],
-        #  [0.,   0.,   0., -inf, -inf],
-        #  [0.,   0.,   0.,   0., -inf],
-        #  [0.,   0.,   0.,   0.,   0.]]
-        
-        return mask
-    
-    def create_pad_mask(self, matrix: torch.tensor, pad_token: int) -> torch.tensor:
-        # If matrix = [1,2,3,0,0,0] where pad_token=0, the result mask is
-        # [False, False, False, True, True, True]
-        return (matrix == pad_token)
         
 
 class PositionalEncoding(nn.Module):
     def __init__(self, dim_model, dropout_p, max_len):
         super().__init__()
-        # Modified version from: https://pytorch.org/tutorials/beginner/transformer_tutorial.html
-        # max_len determines how far the position can have an effect on a token (window)
-        
-        # Info
+
         self.dropout = nn.Dropout(dropout_p)
         
         # Encoding - From formula
@@ -70,18 +49,44 @@ class PositionalEncoding(nn.Module):
         self.register_buffer("pos_encoding",pos_encoding)
         
     def forward(self, token_embedding: torch.tensor) -> torch.tensor:
+        # input size： [seq_len, dim_model]. seq_len < max_len
         # Residual connection + pos encoding
         return self.dropout(token_embedding + self.pos_encoding[:token_embedding.size(0), :])
 
 
-# Example to train the model...(Imcompleted)
-# Prepare dataset
+# Example to train the model
+# Convert Ecog to EEG
 input_size = 128
 output_size = 18
 
 # Model, Loss, Optimizer
 device = "cuda" if torch.cuda.is_available() else "cpu"
-model = Transformer(input_size, output_size).to(device)
+model = TransformerModel(input_size, output_size).to(device)
 criterion = nn.MSELoss()
 optimizer = optim.Adam(model.parameters(), lr=0.001)
 
+# Training loop   
+model.train()
+total_loss = 0
+
+# Below x has the size of (seq_len, 128), and y (seq, 18)
+# dataloader can use the same one in linear_regression
+for x, y in dataloader:
+
+    # Now we shift the tgt by one so with the <SOS> we predict the token at pos 1
+    y_input = y[:,:-1]
+    y_expected = y[:,1:]
+    
+    # Get mask to mask out the next words
+    sequence_length = y_input.size(1)
+    tgt_mask = model.generate_square_subsequent_mask(sequence_length).to(device)
+
+    # Standard training except we pass in y_input and tgt_mask
+    pred = model(x, y_input, tgt_mask)    
+    loss = criterion(pred, y_expected)
+
+    optimizer.zero_grad()
+    loss.backward()
+    optimizer.step()
+
+    total_loss += loss.detach().item()
