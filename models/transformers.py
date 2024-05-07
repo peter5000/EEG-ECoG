@@ -69,8 +69,8 @@ optimizer = optim.Adam(model.parameters(), lr=0.001)
 model.train()
 total_loss = 0
 
-# Below x has the size of (seq_len, 128), and y (seq, 18)
-# dataloader can use the same one in linear_regression
+# Below x has the size of (seq_len, 128), and y (seq_len, 18)
+# dataloader can use the same one in linear_regression_model.py
 for x, y in dataloader:
 
     # Now we shift the tgt by one so with the <SOS> we predict the token at pos 1
@@ -90,3 +90,24 @@ for x, y in dataloader:
     optimizer.step()
 
     total_loss += loss.detach().item()
+
+
+def predict(model, input, max_length=sequence_length):
+    model.eval()
+    
+    y_input = torch.tensor([[]], dtype=torch.long, device=device)
+
+    for _ in range(max_length):
+        # Get source mask
+        tgt_mask = model.get_tgt_mask(y_input.size(1)).to(device)
+        
+        pred = model(input, y_input, tgt_mask)
+        next_item = torch.tensor([[pred]], device=device)
+
+        # Concatenate previous input with predicted value
+        y_input = torch.cat((y_input, next_item), dim=1)
+
+
+    return y_input
+  
+ 
