@@ -2,6 +2,7 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from torch.utils.data import Dataset, DataLoader
 
 import math
 import numpy as np
@@ -9,10 +10,10 @@ import numpy as np
 class TransformerModel(nn.Module):
     def __init__(self, input_size, output_size):
         super(TransformerModel, self).__init__()
-        self.embedding_src = nn.Linear(input_size, 512)
-        self.positional_encoder = PositionalEncoding(dim_model=256, dropout_p=0.1, max_len=5000)
+        self.embedding_src = nn.Linear(input_size, 256)
+        self.positional_encoder = PositionalEncoding(dim_model=256, dropout_p=0.1, max_len=500)
         self.transformer = nn.Transformer(d_model=256, nhead=8, num_encoder_layers=6, num_decoder_layers=6)
-        self.fc = nn.Linear(512, output_size)
+        self.fc = nn.Linear(256, output_size)
 
     def generate_square_subsequent_mask(self, sz):
         mask = (torch.triu(torch.ones(sz, sz)) == 1).transpose(0, 1)
@@ -21,7 +22,7 @@ class TransformerModel(nn.Module):
 
     def forward(self, src, tgt, tgt_mask):
         src = self.embedding_src(src)
-        src = self.self.positional_encoder(src)
+        src = self.positional_encoder(src)
         output = self.transformer(src, tgt, tgt_mask)
         output = self.fc(output)
         return output
@@ -53,9 +54,27 @@ class PositionalEncoding(nn.Module):
         # Residual connection + pos encoding
         return self.dropout(token_embedding + self.pos_encoding[:token_embedding.size(0), :])
 
+# Define your dataset
+class CustomDataset(Dataset):
+    def __init__(self, data, targets):
+        self.data = data
+        self.targets = targets
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, idx):
+        return self.data[idx], self.targets[idx]
+
 
 # Example to train the model
 # Convert Ecog to EEG
+src = torch.tensor(ecog, dtype=torch.float)
+tgt = torch.tensor(eeg, dtype=torch.float)
+
+train_dataset = CustomDataset(src[:30000].unsqueeze(1), tgt[:30000].unsqueeze(1))
+train_loader = DataLoader(train_dataset, batch_size=300)
+
 input_size = 128
 output_size = 18
 
@@ -65,31 +84,36 @@ model = TransformerModel(input_size, output_size).to(device)
 criterion = nn.MSELoss()
 optimizer = optim.Adam(model.parameters(), lr=0.001)
 
-# Training loop   
-model.train()
-total_loss = 0
+# Training loop
+num_epochs = 10
+for epoch in range(num_epochs):
+    model.train()
+    running_loss = 0.0
+    for x, y in train_loader:
+        # print(x.size())
+        # print(y.size())
+        x, y = x.to(device), y.to(device)
 
-# Below x has the size of (seq_len, 128), and y (seq_len, 18)
-# dataloader can use the same one in linear_regression_model.py
-for x, y in dataloader:
+        # Now we shift the tgt by one
+        y_input = y[:-1, :, :]
+        y_expected = y[1:, :, :]
+        
+        # Get mask to mask out the next words
+        sequence_length = y.size(0)
+        tgt_mask = model.generate_square_subsequent_mask(sequence_length).to(device)
+        
+        # print(y_input.size())
+        # print(y_expected.size())
+        # Standard training except we pass in y_input and tgt_mask
+        pred = model(x, y_input, tgt_mask)    
+        loss = criterion(pred, y_expected)
 
-    # Now we shift the tgt by one so with the <SOS> we predict the token at pos 1
-    y_input = y[:,:-1]
-    y_expected = y[:,1:]
-    
-    # Get mask to mask out the next words
-    sequence_length = y_input.size(1)
-    tgt_mask = model.generate_square_subsequent_mask(sequence_length).to(device)
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+        running_loss += loss.item()
 
-    # Standard training except we pass in y_input and tgt_mask
-    pred = model(x, y_input, tgt_mask)    
-    loss = criterion(pred, y_expected)
-
-    optimizer.zero_grad()
-    loss.backward()
-    optimizer.step()
-
-    total_loss += loss.detach().item()
+    print(f"Epoch {epoch+1}, Loss: {running_loss / len(train_loader)}")
 
 
 def predict(model, input, max_length=sequence_length):
