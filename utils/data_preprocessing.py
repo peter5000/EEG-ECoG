@@ -7,56 +7,42 @@ from sklearn.preprocessing import StandardScaler
 import numpy as np
 import matplotlib.pyplot as plt
 
-# Input format: {name1: [path1, path2, ...], name2: [path1, path2, ...], ...}
-# output format: {name1/matfilename1: numpy.ndarray, name1/matfilename2: numpy.ndarray,}
-def loadMatFile(paths):
-    data = {}
-    for path in paths.keys():
-        for matfile in paths[path]:
-            name = matfile.split("/")
-            key = name[-2] + "/" + name[-1]
-            # Leveraging the fact that the data is always at the end
-            try:
-                temp = scipy.io.loadmat(matfile)
-                data[key] = temp[list(temp.keys())[-1]]
-                # print(list(temp.keys())[-1])
-
-            except NotImplementedError:
-                temp = mat73.loadmat(matfile)
-                data[key] = temp[list(temp.keys())[-1]]
-            except:
-                ValueError('could not read at all...')
-    return data
+# Input format: string (file path)
+# output format: (file name, signal)
+def loadMatFile(file_path):
+    name = file_path.split("/")
+    key = name[-1]
+    # Leveraging the fact that the data is always at the end
+    try:
+        temp = scipy.io.loadmat(file_path)
+        return (key, temp[list(temp.keys())[-1]])
+    except NotImplementedError:
+        temp = mat73.loadmat(file_path)
+        return (key, temp[list(temp.keys())[-1]])
+    except:
+        ValueError('could not read at all...')
+        return None
 
 # PCA
 # data: (|samples|, |features|)
 def pca(data, n_comp=2):
     mean = np.mean(data, axis=0)   # (|features|, )
     mean_data = data - mean
-
     std = np.std(data, axis=0)
     z_score = mean_data / std
 
-    cov = np.cov(mean_data.T)      # (x, x) s.t. x = num_components = min(|sample|, |features|)
-    cov = np.round(cov, 2)
-
-    z_cov = np.cov(z_score.T)      # (x, x) s.t. x = num_components = min(|sample|, |features|)
-    z_cov = np.round(z_cov, 2)
+    cov = np.cov(z_score.T)      # (x, x) s.t. x = num_components = min(|sample|, |features|)
+    # cov = np.round(cov, 2)     # This line is probably better for runtime, but decreases the performance
 
     # eig_val: (|num_components|, )
     # eig_vec: (|features|, |num_components|)
     eig_val, eig_vec = np.linalg.eig(cov)
-    z_eig_val, z_eig_vec = np.linalg.eig(z_cov)
 
-    # Sorting eig_vecs from smallest eiv_val to largest
+    # Sorting eig_vecs from the biggest eiv_val to the smallest
     indices = np.arange(0,len(eig_val), 1)
     indices = ([x for _,x in sorted(zip(eig_val, indices))])[::-1]
     eig_val = eig_val[indices]
     eig_vec = eig_vec[:,indices]
-    z_indices = np.arange(0,len(z_eig_val), 1)
-    z_indices = ([x for _,x in sorted(zip(z_eig_val, z_indices))])[::-1]
-    z_eig_val = z_eig_val[z_indices]
-    z_eig_vec = z_eig_vec[:,z_indices]
 
     # Get explained variance
     sum_eig_val = np.sum(eig_val)
@@ -72,7 +58,7 @@ def pca(data, n_comp=2):
     plt.ylabel("Explained variance")
     plt.show()
 
-    ## We will 2 components
+    ## We will {n_comp} components
     eig_vec = eig_vec[:,:n_comp]
     print(eig_vec.shape)
 
@@ -80,88 +66,27 @@ def pca(data, n_comp=2):
     pca_data = mean_data.dot(eig_vec)
     print("Transformed data ", pca_data.shape)
 
-    pca_data2 = z_score.dot(z_eig_vec)
-    print("Transformed data 2 ", pca_data2.shape)
+    return pca_data, eig_vec, mean, std
 
-    # Plot data
+# PCA whitening
+# data: (|samples|, |features|)
+def whitening(data):
+    mean = np.mean(data, axis=0)   # (|features|, )
+    mean_data = data - mean
 
-    fig, ax = plt.subplots(1,3, figsize= (15,15))
-    # Plot original data
-    ax[0].scatter(data[:,0], data[:,1], color='blue', marker='.')
+    cov = np.cov(mean_data.T)      # (x, x) s.t. x = num_components = min(|sample|, |features|)
 
-    # Plot data after subtracting mean from data
-    ax[1].scatter(mean_data[:,0], mean_data[:,1], color='red', marker='.')
+    # eig_val: (|num_components|, )
+    # eig_vec: (|features|, |num_components|)
+    # A: diagonal matrix with eig_val
+    eig_val, eig_vec = np.linalg.eig(cov)
 
-    # Plot data after subtracting mean from data
-    ax[2].scatter(pca_data[:,0], pca_data[:,1], color='red', marker='.')
+    # Sorting eig_vecs from smallest eiv_val to largest
+    indices = np.argsort(eig_val)[::-1]
+    eig_val = eig_val[indices]
+    eig_vec = eig_vec[:,indices]
 
-    # Set title
-    ax[0].set_title("Scatter plot of original data")
-    ax[1].set_title("Scatter plot of data after subtracting mean")
-    ax[2].set_title("Scatter plot of transformed data")
-
-    # Set x ticks
-    ax[0].set_xticks(np.arange(-8, 1, 8))
-    ax[1].set_xticks(np.arange(-8, 1, 8))
-    ax[2].set_xticks(np.arange(-8, 1, 8))
-
-    # Set grid to 'on'
-    ax[0].grid('on')
-    ax[1].grid('on')
-    ax[2].grid('on')
-
-    major_axis = eig_vec[:,0].flatten()
-    xmin = np.amin(pca_data[:,0])
-    xmax = np.amax(pca_data[:,0])
-    ymin = np.amin(pca_data[:,1])
-    ymax = np.amax(pca_data[:,1])
-
-    plt.show()
-    plt.close('all')
-
-    # Reverse PCA transformation
-    recon_data = pca_data[:,2:].dot(eig_vec[:,2:].T) + mean
-    print(recon_data.shape)
-
-    # Plot reconstructed data
-
-    fig, ax = plt.subplots(1,3, figsize= (15, 15))
-    ax[0].scatter(data[:,0], data[:,1], color='blue', marker='.')
-    ax[1].scatter(mean_data[:,0], mean_data[:,1], color='red', marker='.')
-    ax[2].scatter(recon_data[:,0], recon_data[:,1], color='red', marker='.')
-    ax[0].set_title("Scatter plot of original data")
-    ax[1].set_title("Scatter plot of data after subtracting mean")
-    ax[2].set_title("Scatter plot of reconstructed data")
-    ax[0].grid('on')
-    ax[1].grid('on')
-    ax[2].grid('on')
-    plt.show()
-
-    # Compute reconstruction loss
-    loss = np.mean(np.square(recon_data - data))
-    print("Reconstruction loss ", loss)
-
-    # pca = PCA(n_components = n_channel)
-
-    # data = pca.fit_transform(data.T).T
-
-    # some preprocessing
-
-    # inverse transform
-    # train = pca.inverse_transform
-    # test = pca.inverse_transform
-
-    return pca_data, pca_data2 # recon_data
-
-def z_score(X):
-    # X: ndarray, shape (n_features, n_samples)
-    ss = StandardScaler(with_mean=True, with_std=True)
-    Xz = ss.fit_transform(X.T).T
-    return Xz
-
-
-# FFT
-
+    return (np.diag(1/eig_val) ** (0.5))@eig_vec.T@data.T
 
 # Bandpass filter
 
