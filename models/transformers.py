@@ -3,15 +3,18 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
+import scipy.io
 
 import math
 import numpy as np
+
+MAX_SEQ_LEN = 300
 
 class TransformerModel(nn.Module):
     def __init__(self, input_size, output_size):
         super(TransformerModel, self).__init__()
         self.embedding_src = nn.Linear(input_size, 256)
-        self.positional_encoder = PositionalEncoding(dim_model=256, dropout_p=0.1, max_len=500)
+        self.positional_encoder = PositionalEncoding(dim_model=256, dropout_p=0.1, max_len=MAX_SEQ_LEN)
         self.transformer = nn.Transformer(d_model=256, nhead=8, num_encoder_layers=6, num_decoder_layers=6)
         self.fc = nn.Linear(256, output_size)
 
@@ -54,7 +57,6 @@ class PositionalEncoding(nn.Module):
         # Residual connection + pos encoding
         return self.dropout(token_embedding + self.pos_encoding[:token_embedding.size(0), :])
 
-# Define your dataset
 class CustomDataset(Dataset):
     def __init__(self, data, targets):
         self.data = data
@@ -66,17 +68,23 @@ class CustomDataset(Dataset):
     def __getitem__(self, idx):
         return self.data[idx], self.targets[idx]
 
+# Import data
+data_X = scipy.io.loadmat('data/20120904S11_EEGECoG_Chibi_Oosugi-Naoya+Nagasaka-Yasuo+Hasegawa+Naomi_ECoG128-EEG16_mat\EEG_rest.mat')
+data_y = scipy.io.loadmat('data/20120904S11_EEGECoG_Chibi_Oosugi-Naoya+Nagasaka-Yasuo+Hasegawa+Naomi_ECoG128-EEG16_mat\ECoG_rest.mat')
+
+ecog = data_X['EEG']  # (time, channel)
+eeg = data_y['ECoG']
 
 # Example to train the model
 # Convert Ecog to EEG
 src = torch.tensor(ecog, dtype=torch.float)
 tgt = torch.tensor(eeg, dtype=torch.float)
 
-train_dataset = CustomDataset(src[:30000].unsqueeze(1), tgt[:30000].unsqueeze(1))
-train_loader = DataLoader(train_dataset, batch_size=300)
+train_dataset = CustomDataset(src[:30000].unsqueeze(1), tgt[:30000].unsqueeze(1)) #(time=300000, 1, channel#)
+train_loader = DataLoader(train_dataset, batch_size=MAX_SEQ_LEN) # each batch (seq_len=300, 1, channel#)
 
-input_size = 128
-output_size = 18
+input_size = 128  # ecog channel#
+output_size = 18  # eeg channel
 
 # Model, Loss, Optimizer
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -85,6 +93,7 @@ criterion = nn.MSELoss()
 optimizer = optim.Adam(model.parameters(), lr=0.001)
 
 # Training loop
+print("Beginning training model...")
 num_epochs = 10
 for epoch in range(num_epochs):
     model.train()
@@ -116,22 +125,33 @@ for epoch in range(num_epochs):
     print(f"Epoch {epoch+1}, Loss: {running_loss / len(train_loader)}")
 
 
-def predict(model, input, max_length=sequence_length):
+def predict(model, input, max_length=MAX_SEQ_LEN):
     model.eval()
     
-    y_input = torch.tensor([[]], dtype=torch.long, device=device)
+    y_input = torch.ones(1, 1, 18, dtype=torch.float, device=device)
+    # print(y_input.size())
+    # print(input.size())
+    
+    tgt_mask = model.generate_square_subsequent_mask(max_length).to(device)
 
-    for _ in range(max_length):
-        # Get source mask
-        tgt_mask = model.get_tgt_mask(y_input.size(1)).to(device)
-        
-        pred = model(input, y_input, tgt_mask)
-        next_item = torch.tensor([[pred]], device=device)
+    for i in range(max_length):
+        pred = model(input, y_input[i].unsqueeze(0), tgt_mask)
+        y_input = torch.cat((y_input, pred), dim=0)
+        pred.cpu()
+        # print(y_input.size())
 
-        # Concatenate previous input with predicted value
-        y_input = torch.cat((y_input, next_item), dim=1)
+    return y_input[1:]
 
+print("Beginning predicting...")
+# predict loop
+num_epochs = 10
+for epoch in range(num_epochs):
+    running_loss = 0.0
+    with torch.no_grad():
+        for x, y in train_loader:
+            x, y = x.to(device), y.to(device)
+            pred = predict(model, x)    
+            loss = criterion(pred, y)
+            running_loss += loss.item()
 
-    return y_input
-  
- 
+    print(f"Epoch {epoch+1}, Loss: {running_loss / len(train_loader)}")
