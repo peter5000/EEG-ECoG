@@ -1,5 +1,5 @@
 import sys
-sys.path.append('C:/Users/chans/Documents/UW/2023_2024/SP24/CSE_481F/EEG-ECoG')
+sys.path.append('C:/Users/chans/Documents/UW/2023_2024/SP24/CSE_481F/EEG-ECoG') # adding path for packages
 from utils import data_preprocessing as dp
 from visualizing import graphs as gp
 import matplotlib.pyplot as plt
@@ -26,7 +26,7 @@ def SanityCheckPCA(Fs=1000, f=5, sample=1000):
     plt.show()
 
 # PCA whitening sanity check
-def SanityCheckWhitening(Fs=1000, f=5, sample=1000):# Generate random data
+def SanityCheckWhitening():# Generate random data
     np.random.seed(0)
     data = np.random.randn(100, 5)
 
@@ -49,6 +49,12 @@ def SanityCheckWhitening(Fs=1000, f=5, sample=1000):# Generate random data
     # # Compute reconstruction loss
     # loss = np.mean(np.square(recon_data - sum_signal))
     # print("Reconstruction loss ", loss)
+
+# def SanityCheckFiltering(data):
+#     signal = np.sin(2 * np.pi * f * x / Fs)
+#     output = dp.butter_bandpass_filter(data, lowcut, highcut, fs, order)
+#     plt.plot()
+#     plt.show()
 
 # ecog_fp = '../Datasets/20120123S11_EEGECoG_Su_Oosugi_ECoG256-EEG17/20120123S11_EEGECoG_Su_Oosugi_ECoG256-EEG17_mat/ECoG_rest.mat'
 # eeg_fp = '../Datasets/20120123S11_EEGECoG_Su_Oosugi_ECoG256-EEG17/20120123S11_EEGECoG_Su_Oosugi_ECoG256-EEG17_mat/EEG_rest.mat'

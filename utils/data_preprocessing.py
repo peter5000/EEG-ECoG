@@ -1,8 +1,6 @@
 # data loading and data preprocessing files
 import scipy.io
 import mat73
-from sklearn.decomposition import PCA
-from sklearn.preprocessing import StandardScaler
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.signal import butter, lfilter
@@ -32,7 +30,7 @@ def pca(data, n_comp=2):
     z_score = mean_data / std
 
     cov = np.cov(z_score.T)      # (x, x) s.t. x = num_components = min(|sample|, |features|)
-    # cov = np.round(cov, 2)     # This line is probably better for runtime, but decreases the performance
+    # cov = np.round(cov, 2)     # Including this line is probably better for the runtime, but decreases the performance
 
     # eig_val: (|num_components|, )
     # eig_vec: (|features|, |num_components|)
@@ -102,82 +100,84 @@ def butter_bandpass_filter(data, lowcut, highcut, fs, order=5):
 
 # Example usages
 if __name__ == "__main__":
-  # Paths to datasets
-  PATHS = {
-    "20110607S1_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat" :
-    [
-      '../Datasets/20110607S1_EEGECoG_Su_Oosugi_ECoG128-EEG18/20110607S1_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/ECoG01.mat',
-      '../Datasets/20110607S1_EEGECoG_Su_Oosugi_ECoG128-EEG18/20110607S1_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/ECoG02.mat',
-      '../Datasets/20110607S1_EEGECoG_Su_Oosugi_ECoG128-EEG18/20110607S1_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/EEG01.mat',
-      '../Datasets/20110607S1_EEGECoG_Su_Oosugi_ECoG128-EEG18/20110607S1_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/EEG02.mat',
-    ],
-    "20110607S2_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat" :
-    [
-      '../Datasets/20110607S2_EEGECoG_Su_Oosugi_ECoG128-EEG18/20110607S2_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/ECoG01_anesthesia.mat',
-      '../Datasets/20110607S2_EEGECoG_Su_Oosugi_ECoG128-EEG18/20110607S2_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/ECoG02_anesthesia.mat',
-      '../Datasets/20110607S2_EEGECoG_Su_Oosugi_ECoG128-EEG18/20110607S2_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/ECoG03_anesthesia.mat',
-      '../Datasets/20110607S2_EEGECoG_Su_Oosugi_ECoG128-EEG18/20110607S2_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/ECoG04_anesthesia.mat',
-      '../Datasets/20110607S2_EEGECoG_Su_Oosugi_ECoG128-EEG18/20110607S2_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/ECoG05_anesthesia.mat',
-      '../Datasets/20110607S2_EEGECoG_Su_Oosugi_ECoG128-EEG18/20110607S2_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/EEG01_anesthesia.mat',
-      '../Datasets/20110607S2_EEGECoG_Su_Oosugi_ECoG128-EEG18/20110607S2_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/EEG02_anesthesia.mat',
-      '../Datasets/20110607S2_EEGECoG_Su_Oosugi_ECoG128-EEG18/20110607S2_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/EEG03_anesthesia.mat',
-      '../Datasets/20110607S2_EEGECoG_Su_Oosugi_ECoG128-EEG18/20110607S2_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/EEG04_anesthesia.mat',
-      '../Datasets/20110607S2_EEGECoG_Su_Oosugi_ECoG128-EEG18/20110607S2_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/EEG05_anesthesia.mat',
-    ],
-    "20110607S3_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat" :
-    [
-      '../Datasets/20110607S3_EEGECoG_Su_Oosugi_ECoG128-EEG18/20110607S3_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/ECoG06_anesthesia.mat',
-      '../Datasets/20110607S3_EEGECoG_Su_Oosugi_ECoG128-EEG18/20110607S3_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/EEG06_anesthesia.mat',
-    ],
-    "20110607S11_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat" :
-    [
-      '../Datasets/20110607S11_EEGECoG_Su_Oosugi_ECoG128-EEG18/20110607S11_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/ECoG01.mat',
-      '../Datasets/20110607S11_EEGECoG_Su_Oosugi_ECoG128-EEG18/20110607S11_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/ECoG02.mat',
-      '../Datasets/20110607S11_EEGECoG_Su_Oosugi_ECoG128-EEG18/20110607S11_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/EEG01.mat',
-      '../Datasets/20110607S11_EEGECoG_Su_Oosugi_ECoG128-EEG18/20110607S11_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/EEG02.mat',
-    ],
-    "20110607S12_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat" :
-    [
-      '../Datasets/20110607S12_EEGECoG_Su_Oosugi_ECoG128-EEG18/20110607S12_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/ECoG01_anesthesia.mat',
-      '../Datasets/20110607S12_EEGECoG_Su_Oosugi_ECoG128-EEG18/20110607S12_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/ECoG02_anesthesia.mat',
-      '../Datasets/20110607S12_EEGECoG_Su_Oosugi_ECoG128-EEG18/20110607S12_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/ECoG03_anesthesia.mat',
-      '../Datasets/20110607S12_EEGECoG_Su_Oosugi_ECoG128-EEG18/20110607S12_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/ECoG04_anesthesia.mat',
-      '../Datasets/20110607S12_EEGECoG_Su_Oosugi_ECoG128-EEG18/20110607S12_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/ECoG05_anesthesia.mat',
-      '../Datasets/20110607S12_EEGECoG_Su_Oosugi_ECoG128-EEG18/20110607S12_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/EEG01_anesthesia.mat',
-      '../Datasets/20110607S12_EEGECoG_Su_Oosugi_ECoG128-EEG18/20110607S12_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/EEG02_anesthesia.mat',
-      '../Datasets/20110607S12_EEGECoG_Su_Oosugi_ECoG128-EEG18/20110607S12_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/EEG03_anesthesia.mat',
-      '../Datasets/20110607S12_EEGECoG_Su_Oosugi_ECoG128-EEG18/20110607S12_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/EEG04_anesthesia.mat',
-      '../Datasets/20110607S12_EEGECoG_Su_Oosugi_ECoG128-EEG18/20110607S12_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/EEG05_anesthesia.mat',
-    ],
-    "20120123S11_EEGECoG_Su_Oosugi_ECoG256-EEG17_mat" :
-    [
-      '../Datasets/20120123S11_EEGECoG_Su_Oosugi_ECoG256-EEG17/20120123S11_EEGECoG_Su_Oosugi_ECoG256-EEG17_mat/ECoG_rest.mat',
-      '../Datasets/20120123S11_EEGECoG_Su_Oosugi_ECoG256-EEG17/20120123S11_EEGECoG_Su_Oosugi_ECoG256-EEG17_mat/EEG_rest.mat',
-      '../Datasets/20120123S11_EEGECoG_Su_Oosugi_ECoG256-EEG17/20120123S11_EEGECoG_Su_Oosugi_ECoG256-EEG17_mat/ECoG_low-anesthetic.mat',
-      '../Datasets/20120123S11_EEGECoG_Su_Oosugi_ECoG256-EEG17/20120123S11_EEGECoG_Su_Oosugi_ECoG256-EEG17_mat/EEG_low-anesthetic.mat',
-      '../Datasets/20120123S11_EEGECoG_Su_Oosugi_ECoG256-EEG17/20120123S11_EEGECoG_Su_Oosugi_ECoG256-EEG17_mat/ECoG_deep-anesthetic.mat',
-      '../Datasets/20120123S11_EEGECoG_Su_Oosugi_ECoG256-EEG17/20120123S11_EEGECoG_Su_Oosugi_ECoG256-EEG17_mat/EEG_deep-anesthetic.mat',
-      '../Datasets/20120123S11_EEGECoG_Su_Oosugi_ECoG256-EEG17/20120123S11_EEGECoG_Su_Oosugi_ECoG256-EEG17_mat/ECoG_recovery.mat',
-      '../Datasets/20120123S11_EEGECoG_Su_Oosugi_ECoG256-EEG17/20120123S11_EEGECoG_Su_Oosugi_ECoG256-EEG17_mat/EEG_recovery.mat',
-    ],
-    "20120904S11_EEGECoG_Chibi_Oosugi_ECoG128-EEG16_mat" :
-    [
-      '../Datasets/20120904S11_EEGECoG_Chibi_Oosugi_ECoG128-EEG16/20120904S11_EEGECoG_Chibi_Oosugi_ECoG128-EEG16_mat/ECoG_rest.mat',
-      '../Datasets/20120904S11_EEGECoG_Chibi_Oosugi_ECoG128-EEG16/20120904S11_EEGECoG_Chibi_Oosugi_ECoG128-EEG16_mat/EEG_rest.mat',
-      '../Datasets/20120904S11_EEGECoG_Chibi_Oosugi_ECoG128-EEG16/20120904S11_EEGECoG_Chibi_Oosugi_ECoG128-EEG16_mat/ECoG_low-anesthetic.mat',
-      '../Datasets/20120904S11_EEGECoG_Chibi_Oosugi_ECoG128-EEG16/20120904S11_EEGECoG_Chibi_Oosugi_ECoG128-EEG16_mat/EEG_low-anesthetic.mat',
-      '../Datasets/20120904S11_EEGECoG_Chibi_Oosugi_ECoG128-EEG16/20120904S11_EEGECoG_Chibi_Oosugi_ECoG128-EEG16_mat/ECoG_deep-anesthetic.mat',
-      '../Datasets/20120904S11_EEGECoG_Chibi_Oosugi_ECoG128-EEG16/20120904S11_EEGECoG_Chibi_Oosugi_ECoG128-EEG16_mat/EEG_deep-anesthetic.mat',
-      '../Datasets/20120904S11_EEGECoG_Chibi_Oosugi_ECoG128-EEG16/20120904S11_EEGECoG_Chibi_Oosugi_ECoG128-EEG16_mat/ECoG_recovery.mat',
-      '../Datasets/20120904S11_EEGECoG_Chibi_Oosugi_ECoG128-EEG16/20120904S11_EEGECoG_Chibi_Oosugi_ECoG128-EEG16_mat/EEG_recovery.mat',
-    ],
-  }
+    # Paths to datasets
+    PATHS = {
+        "20110607S1_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat" :
+        [
+            '../Datasets/20110607S1_EEGECoG_Su_Oosugi_ECoG128-EEG18/20110607S1_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/ECoG01.mat',
+            '../Datasets/20110607S1_EEGECoG_Su_Oosugi_ECoG128-EEG18/20110607S1_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/ECoG02.mat',
+            '../Datasets/20110607S1_EEGECoG_Su_Oosugi_ECoG128-EEG18/20110607S1_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/EEG01.mat',
+            '../Datasets/20110607S1_EEGECoG_Su_Oosugi_ECoG128-EEG18/20110607S1_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/EEG02.mat',
+        ],
+        "20110607S2_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat" :
+        [
+            '../Datasets/20110607S2_EEGECoG_Su_Oosugi_ECoG128-EEG18/20110607S2_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/ECoG01_anesthesia.mat',
+            '../Datasets/20110607S2_EEGECoG_Su_Oosugi_ECoG128-EEG18/20110607S2_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/ECoG02_anesthesia.mat',
+            '../Datasets/20110607S2_EEGECoG_Su_Oosugi_ECoG128-EEG18/20110607S2_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/ECoG03_anesthesia.mat',
+            '../Datasets/20110607S2_EEGECoG_Su_Oosugi_ECoG128-EEG18/20110607S2_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/ECoG04_anesthesia.mat',
+            '../Datasets/20110607S2_EEGECoG_Su_Oosugi_ECoG128-EEG18/20110607S2_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/ECoG05_anesthesia.mat',
+            '../Datasets/20110607S2_EEGECoG_Su_Oosugi_ECoG128-EEG18/20110607S2_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/EEG01_anesthesia.mat',
+            '../Datasets/20110607S2_EEGECoG_Su_Oosugi_ECoG128-EEG18/20110607S2_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/EEG02_anesthesia.mat',
+            '../Datasets/20110607S2_EEGECoG_Su_Oosugi_ECoG128-EEG18/20110607S2_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/EEG03_anesthesia.mat',
+            '../Datasets/20110607S2_EEGECoG_Su_Oosugi_ECoG128-EEG18/20110607S2_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/EEG04_anesthesia.mat',
+            '../Datasets/20110607S2_EEGECoG_Su_Oosugi_ECoG128-EEG18/20110607S2_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/EEG05_anesthesia.mat',
+        ],
+        "20110607S3_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat" :
+        [
+            '../Datasets/20110607S3_EEGECoG_Su_Oosugi_ECoG128-EEG18/20110607S3_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/ECoG06_anesthesia.mat',
+            '../Datasets/20110607S3_EEGECoG_Su_Oosugi_ECoG128-EEG18/20110607S3_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/EEG06_anesthesia.mat',
+        ],
+        "20110607S11_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat" :
+        [
+            '../Datasets/20110607S11_EEGECoG_Su_Oosugi_ECoG128-EEG18/20110607S11_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/ECoG01.mat',
+            '../Datasets/20110607S11_EEGECoG_Su_Oosugi_ECoG128-EEG18/20110607S11_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/ECoG02.mat',
+            '../Datasets/20110607S11_EEGECoG_Su_Oosugi_ECoG128-EEG18/20110607S11_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/EEG01.mat',
+            '../Datasets/20110607S11_EEGECoG_Su_Oosugi_ECoG128-EEG18/20110607S11_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/EEG02.mat',
+        ],
+        "20110607S12_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat" :
+        [
+            '../Datasets/20110607S12_EEGECoG_Su_Oosugi_ECoG128-EEG18/20110607S12_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/ECoG01_anesthesia.mat',
+            '../Datasets/20110607S12_EEGECoG_Su_Oosugi_ECoG128-EEG18/20110607S12_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/ECoG02_anesthesia.mat',
+            '../Datasets/20110607S12_EEGECoG_Su_Oosugi_ECoG128-EEG18/20110607S12_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/ECoG03_anesthesia.mat',
+            '../Datasets/20110607S12_EEGECoG_Su_Oosugi_ECoG128-EEG18/20110607S12_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/ECoG04_anesthesia.mat',
+            '../Datasets/20110607S12_EEGECoG_Su_Oosugi_ECoG128-EEG18/20110607S12_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/ECoG05_anesthesia.mat',
+            '../Datasets/20110607S12_EEGECoG_Su_Oosugi_ECoG128-EEG18/20110607S12_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/EEG01_anesthesia.mat',
+            '../Datasets/20110607S12_EEGECoG_Su_Oosugi_ECoG128-EEG18/20110607S12_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/EEG02_anesthesia.mat',
+            '../Datasets/20110607S12_EEGECoG_Su_Oosugi_ECoG128-EEG18/20110607S12_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/EEG03_anesthesia.mat',
+            '../Datasets/20110607S12_EEGECoG_Su_Oosugi_ECoG128-EEG18/20110607S12_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/EEG04_anesthesia.mat',
+            '../Datasets/20110607S12_EEGECoG_Su_Oosugi_ECoG128-EEG18/20110607S12_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/EEG05_anesthesia.mat',
+        ],
+        "20120123S11_EEGECoG_Su_Oosugi_ECoG256-EEG17_mat" :
+        [
+            '../Datasets/20120123S11_EEGECoG_Su_Oosugi_ECoG256-EEG17/20120123S11_EEGECoG_Su_Oosugi_ECoG256-EEG17_mat/ECoG_rest.mat',
+            '../Datasets/20120123S11_EEGECoG_Su_Oosugi_ECoG256-EEG17/20120123S11_EEGECoG_Su_Oosugi_ECoG256-EEG17_mat/EEG_rest.mat',
+            '../Datasets/20120123S11_EEGECoG_Su_Oosugi_ECoG256-EEG17/20120123S11_EEGECoG_Su_Oosugi_ECoG256-EEG17_mat/ECoG_low-anesthetic.mat',
+            '../Datasets/20120123S11_EEGECoG_Su_Oosugi_ECoG256-EEG17/20120123S11_EEGECoG_Su_Oosugi_ECoG256-EEG17_mat/EEG_low-anesthetic.mat',
+            '../Datasets/20120123S11_EEGECoG_Su_Oosugi_ECoG256-EEG17/20120123S11_EEGECoG_Su_Oosugi_ECoG256-EEG17_mat/ECoG_deep-anesthetic.mat',
+            '../Datasets/20120123S11_EEGECoG_Su_Oosugi_ECoG256-EEG17/20120123S11_EEGECoG_Su_Oosugi_ECoG256-EEG17_mat/EEG_deep-anesthetic.mat',
+            '../Datasets/20120123S11_EEGECoG_Su_Oosugi_ECoG256-EEG17/20120123S11_EEGECoG_Su_Oosugi_ECoG256-EEG17_mat/ECoG_recovery.mat',
+            '../Datasets/20120123S11_EEGECoG_Su_Oosugi_ECoG256-EEG17/20120123S11_EEGECoG_Su_Oosugi_ECoG256-EEG17_mat/EEG_recovery.mat',
+        ],
+        "20120904S11_EEGECoG_Chibi_Oosugi_ECoG128-EEG16_mat" :
+        [
+            '../Datasets/20120904S11_EEGECoG_Chibi_Oosugi_ECoG128-EEG16/20120904S11_EEGECoG_Chibi_Oosugi_ECoG128-EEG16_mat/ECoG_rest.mat',
+            '../Datasets/20120904S11_EEGECoG_Chibi_Oosugi_ECoG128-EEG16/20120904S11_EEGECoG_Chibi_Oosugi_ECoG128-EEG16_mat/EEG_rest.mat',
+            '../Datasets/20120904S11_EEGECoG_Chibi_Oosugi_ECoG128-EEG16/20120904S11_EEGECoG_Chibi_Oosugi_ECoG128-EEG16_mat/ECoG_low-anesthetic.mat',
+            '../Datasets/20120904S11_EEGECoG_Chibi_Oosugi_ECoG128-EEG16/20120904S11_EEGECoG_Chibi_Oosugi_ECoG128-EEG16_mat/EEG_low-anesthetic.mat',
+            '../Datasets/20120904S11_EEGECoG_Chibi_Oosugi_ECoG128-EEG16/20120904S11_EEGECoG_Chibi_Oosugi_ECoG128-EEG16_mat/ECoG_deep-anesthetic.mat',
+            '../Datasets/20120904S11_EEGECoG_Chibi_Oosugi_ECoG128-EEG16/20120904S11_EEGECoG_Chibi_Oosugi_ECoG128-EEG16_mat/EEG_deep-anesthetic.mat',
+            '../Datasets/20120904S11_EEGECoG_Chibi_Oosugi_ECoG128-EEG16/20120904S11_EEGECoG_Chibi_Oosugi_ECoG128-EEG16_mat/ECoG_recovery.mat',
+            '../Datasets/20120904S11_EEGECoG_Chibi_Oosugi_ECoG128-EEG16/20120904S11_EEGECoG_Chibi_Oosugi_ECoG128-EEG16_mat/EEG_recovery.mat',
+        ],
+    }
 
-  # data format: {name1/matfilename1:
-  #               {'__header__': string, '__version__': string, '__globals__': list, ['EEG' or 'ECoG']: numpy.ndarray},
-  #                name1/matfilename2: ...}}
-  data = loadMatFile(PATHS)
-  # print(data["20110607S1_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/ECoG01.mat"])
-  for key in data.keys():
-    # print(key, data[key].keys())
-    print(key, data[key])
+    # data format: {name1: {matfilename1: signal, matfilename2: signal, ...}, name2: {}, ...}
+    data = {}
+    for key in PATHS.keys():
+        data[key] = {}
+        for file in PATHS[key]:
+            filename, signal = loadMatFile(file)
+            data[key][filename] = signal
+    for key in data.keys():
+        print(key)
+        # print(key, data[key])
