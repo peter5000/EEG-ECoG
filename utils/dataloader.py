@@ -7,8 +7,8 @@ from sklearn.preprocessing import StandardScaler
 # only return train dataset for now
 def dataloader(batch_size=32, shuffle=False):
     # Import data
-    data_X = scipy.io.loadmat('data/20120904S11_EEGECoG_Chibi_Oosugi-Naoya+Nagasaka-Yasuo+Hasegawa+Naomi_ECoG128-EEG16_mat\EEG_rest.mat')
-    data_y = scipy.io.loadmat('data/20120904S11_EEGECoG_Chibi_Oosugi-Naoya+Nagasaka-Yasuo+Hasegawa+Naomi_ECoG128-EEG16_mat\ECoG_rest.mat')
+    data_X = scipy.io.loadmat('../Datasets/20120904S11_EEGECoG_Chibi_Oosugi_ECoG128-EEG16/20120904S11_EEGECoG_Chibi_Oosugi_ECoG128-EEG16_mat/ECoG_rest.mat')
+    data_y = scipy.io.loadmat('../Datasets/20120904S11_EEGECoG_Chibi_Oosugi_ECoG128-EEG16/20120904S11_EEGECoG_Chibi_Oosugi_ECoG128-EEG16_mat/EEG_rest.mat')
 
     X = data_X['EEG']
     y = data_y['ECoG']
