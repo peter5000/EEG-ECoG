@@ -8,7 +8,11 @@ import scipy.io
 import math
 import numpy as np
 
-MAX_SEQ_LEN = 300
+from utils.dataloader import dataloader
+import os
+
+os.environ["CUDA_VISIBLE_DEVICES"] = "2"
+MAX_SEQ_LEN = 3000
 
 class TransformerModel(nn.Module):
     def __init__(self, input_size, output_size):
@@ -68,20 +72,8 @@ class CustomDataset(Dataset):
     def __getitem__(self, idx):
         return self.data[idx], self.targets[idx]
 
-# Import data
-data_X = scipy.io.loadmat('data/20120904S11_EEGECoG_Chibi_Oosugi-Naoya+Nagasaka-Yasuo+Hasegawa+Naomi_ECoG128-EEG16_mat\EEG_rest.mat')
-data_y = scipy.io.loadmat('data/20120904S11_EEGECoG_Chibi_Oosugi-Naoya+Nagasaka-Yasuo+Hasegawa+Naomi_ECoG128-EEG16_mat\ECoG_rest.mat')
 
-ecog = data_X['EEG']  # (time, channel)
-eeg = data_y['ECoG']
-
-# Example to train the model
-# Convert Ecog to EEG
-src = torch.tensor(ecog, dtype=torch.float)
-tgt = torch.tensor(eeg, dtype=torch.float)
-
-train_dataset = CustomDataset(src[:30000].unsqueeze(1), tgt[:30000].unsqueeze(1)) #(time=300000, 1, channel#)
-train_loader = DataLoader(train_dataset, batch_size=MAX_SEQ_LEN) # each batch (seq_len=300, 1, channel#)
+train_loader = dataloader(batch_size=MAX_SEQ_LEN) # each batch (seq_len=300, 1, channel#)
 
 input_size = 128  # ecog channel#
 output_size = 18  # eeg channel
