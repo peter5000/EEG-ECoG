@@ -1,11 +1,11 @@
 # data loading and data preprocessing files
-
 import scipy.io
 import mat73
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.signal import butter, lfilter
 
 # Input format: string (file path)
 # output format: (file name, signal)
@@ -88,9 +88,17 @@ def whitening(data):
 
     return (np.diag(1/eig_val) ** (0.5))@eig_vec.T@data.T
 
-# Bandpass filter
+# Filters
 
+# returns denominator and numerator of IIR filter
+def butter_bandpass(lowcut, highcut, fs, order=4):
+    return butter(order, [lowcut, highcut], fs=fs, btype='bandpass')
 
+# returns filtered data from butterworth
+def butter_bandpass_filter(data, lowcut, highcut, fs, order=5):
+    b, a = butter_bandpass(lowcut, highcut, fs, order=order)
+    y = lfilter(b, a, data)
+    return y
 
 # Example usages
 if __name__ == "__main__":
