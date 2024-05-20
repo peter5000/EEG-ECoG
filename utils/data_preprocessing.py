@@ -89,13 +89,15 @@ def whitening(data):
 # Filters
 
 # returns denominator and numerator of IIR filter
+# lowcut: low-bound, highcut: highbound, fs: sampling frequency, order: order
 def butter_bandpass(lowcut, highcut, fs, order=4):
     return butter(order, [lowcut, highcut], fs=fs, btype='bandpass')
 
 # returns filtered data from butterworth
-def butter_bandpass_filter(data, lowcut, highcut, fs, order=5):
-    b, a = butter_bandpass(lowcut, highcut, fs, order=order)
-    y = lfilter(b, a, data)
+# data: data, lowcut: low-bound, highcut: highbound, fs: sampling frequency, order: order
+def butter_bandpass_filter(data, lowcut, highcut, fs, order=4):
+    b, a = butter_bandpass(lowcut, highcut, fs, order=order)    # Create Filter
+    y = lfilter(b, a, data)                                     # Filter Data
     return y
 
 # Example usages
