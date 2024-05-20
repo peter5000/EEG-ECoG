@@ -87,21 +87,24 @@ if __name__ == "__main__":
         # print(ecog_data.shape) (256, 300000)
         ecog_fs = 1000
         eeg_fs = 1000
-        ecog_channel = ecog_data[:,:ecog_fs*5].shape[0]
-        eeg_channel = eeg_data[:,:ecog_fs*5].shape[0]
+        window_length = 3
+        ecog_channel = ecog_data.shape[0]
+        eeg_channel = eeg_data.shape[0]
 
-        pca_data, eig_vec, mean, std = dp.pca(eeg_data.T, 2)
-        recon_data = pca_data[:,:1].dot(eig_vec[:,:1].T) * std + mean
+        pca_data, eig_vec, mean, std = dp.pca(eeg_data[:,:eeg_fs*window_length].T, 17)
+        recon_data = pca_data[:,1:].dot(eig_vec[:,1:].T) * std + mean
 
         print(recon_data.shape)
         print(pca_data.shape)
-        gp.graphAllChannels(pca_data.T, 17, eeg_data.shape[1])
+        gp.graphAllChannels(eeg_data[:,:eeg_fs*window_length], 17, eeg_fs*window_length)
+        gp.graphAllChannels(pca_data.T, 17, eeg_fs*window_length)
+        gp.graphAllChannels(recon_data.T, 17, eeg_fs*window_length)
 
-        gp.graphAllChannels(recon_data.T, 17, eeg_data.shape[1])
-
-        ecog_data_pca, recon_ecog_data = dp.pca(ecog_data.T, 200)
-        gp.graphAllChannels(ecog_data_pca.T, 20, ecog_data.shape[1])
-        gp.graphAllChannels(recon_ecog_data.T, 20, ecog_data.shape[1])
+        pca_data_2, eig_vec_2, mean_2, std_2 = dp.pca(ecog_data[:,:ecog_fs*window_length].T, 200)
+        recon_data_2 = pca_data_2[:,1:].dot(eig_vec_2[:,1:].T) * std_2 + mean_2
+        gp.graphAllChannels(ecog_data[:,:ecog_fs*window_length], 20, eeg_fs*window_length)
+        gp.graphAllChannels(pca_data_2.T, 20, ecog_fs*window_length)
+        gp.graphAllChannels(recon_data_2.T, 20, ecog_fs*window_length)
 
         # print(eeg_backto_pca)
         # print("--------------------------")

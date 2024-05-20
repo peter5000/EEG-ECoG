@@ -103,6 +103,15 @@ def butter_bandpass_filter(data, lowcut, highcut, fs, order=4):
     y = lfilter(b, a, data)                                     # Filter Data
     return y
 
+# size: size of gaussian window, sigma: higher the value, smoother the gaussian, data: data, new_length: new_length
+def downsample_data(size, sigma, data, new_length):
+    kernel = np.exp(-0.5 * (np.arange(size) - size // 2)**2 / sigma**2)
+    kernel = kernel / np.sum(kernel)
+    smoothed_data = np.convolve(data, kernel, mode='same')
+    x_original = np.linspace(0, 1, len(smoothed_data))
+    x_new = np.linspace(0, 1, new_length)
+    return np.interp(x_new, x_original, smoothed_data)
+
 # Example usages
 if __name__ == "__main__":
     # Paths to datasets
