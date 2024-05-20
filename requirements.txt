@@ -44,7 +44,6 @@ ipython==8.24.0
 ipywidgets==8.1.2
 jedi==0.19.1
 jupyterlab-widgets==3.0.10
-matplotlib==inline-0.1.7
 parso==0.8.4
 prompt-toolkit==3.0.43
 pure-eval==0.2.2
@@ -59,3 +58,4 @@ vtk==9.3.0
 wcwidth==0.2.13
 widgetsnbextension==4.0.10
 nibabel==5.2.1
+torch==2.3.0
