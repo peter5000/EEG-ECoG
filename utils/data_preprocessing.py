@@ -67,6 +67,10 @@ def pca(data, n_comp=2, std=False):
     pca_data = mean_data.dot(eig_vec)
     print("Transformed data ", pca_data.shape)
 
+    # # Compute reconstruction loss
+    # loss = np.mean(np.square(recon_data - sum_signal))
+    # print("Reconstruction loss ", loss)
+
     return pca_data, eig_vec, mean, std
 
 # PCA whitening
@@ -85,6 +89,8 @@ def whitening(data):
     # Sorting eig_vecs from smallest eiv_val to largest
     indices = np.argsort(eig_val)[::-1]
     eig_val = eig_val[indices]
+    print(eig_val)
+    print(eig_vec)
     eig_vec = eig_vec[:,indices]
 
     return (np.diag(1/eig_val) ** (0.5))@eig_vec.T@data.T
@@ -104,7 +110,7 @@ def butter_bandpass_filter(data, lowcut, highcut, fs, order=4):
     return y
 
 # size: size of gaussian window, sigma: higher the value, smoother the gaussian, data: data, new_length: new_length
-def downsample_data(size, sigma, data, new_length):
+def downsample_data(data, new_length, size=15, sigma=1):
     kernel = np.exp(-0.5 * (np.arange(size) - size // 2)**2 / sigma**2)
     kernel = kernel / np.sum(kernel)
     smoothed_data = np.convolve(data, kernel, mode='same')
