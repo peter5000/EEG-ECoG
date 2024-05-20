@@ -23,11 +23,14 @@ def loadMatFile(file_path):
 
 # PCA
 # data: (|samples|, |features|)
-def pca(data, n_comp=2):
+def pca(data, n_comp=2, std=False):
     mean = np.mean(data, axis=0)   # (|features|, )
     mean_data = data - mean
     std = np.std(data, axis=0)
-    z_score = mean_data / std
+    z_score = mean_data
+    # if std != 0 and std performs better
+    if std is True:
+        z_score /= std
 
     cov = np.cov(z_score.T)      # (x, x) s.t. x = num_components = min(|sample|, |features|)
     # cov = np.round(cov, 2)     # Including this line is probably better for the runtime, but decreases the performance
