@@ -11,15 +11,13 @@ import argparse
 # PCA sanity check
 def SanityCheckPCA(Fs=1000, f=5, sample=1000):
     x = np.arange(sample)
-    # f = number of phases, Fs = frequency, x = sampling rate
-    signal = np.sin(2 * np.pi * f * x / Fs)
-    signal2 = np.sin(2 * np.pi * f * x / Fs)
-    signal2[0] = signal2[1]*300
+    signal = generateSineWave(0, 3, 10, 2)
+    signal2 = np.arange(30)
 
     sum_signal = np.vstack((signal, signal2))
     pca_result, eig_vec, mean, std = dp.pca(sum_signal.T)
 
-    recon_data = pca_result[:,:1].dot(eig_vec[:,:1].T) * std + mean
+    recon_data = pca_result[:,1:].dot(eig_vec[:,1:].T) * std + mean
     fig, ax = plt.subplots(2,3, figsize= (15, 15))
     ax[0][0].plot(range(pca_result.shape[0]), pca_result[:,0], color='blue', marker='.')
     ax[1][0].plot(range(pca_result.shape[0]), pca_result[:,1], color='blue', marker='.')
@@ -70,46 +68,6 @@ def generateSineWave(start_time, end_time, sample_rate, frequency, amplitude=1, 
     time = np.arange(start_time, end_time, 1/sample_rate)
     return amplitude * np.sin(2 * np.pi * frequency * time + offset)
 
-# ecog_fp = '../Datasets/20120123S11_EEGECoG_Su_Oosugi_ECoG256-EEG17/20120123S11_EEGECoG_Su_Oosugi_ECoG256-EEG17_mat/ECoG_rest.mat'
-# eeg_fp = '../Datasets/20120123S11_EEGECoG_Su_Oosugi_ECoG256-EEG17/20120123S11_EEGECoG_Su_Oosugi_ECoG256-EEG17_mat/EEG_rest.mat'
-# ecog_data = dp.loadMatFile(ecog_fp)[1]
-# eeg_data = dp.loadMatFile(eeg_fp)[1]
-
-# # print(eeg_data.shape) (17, 300000)
-# # print(ecog_data.shape) (256, 300000)
-# ecog_channel = ecog_data.shape[0]
-# eeg_channel = eeg_data.shape[0]
-# ecog_fs = 1000
-# eeg_fs = 1000
-
-# data, recon_data = dp.pca(eeg_data.T, 2)
-
-# print(recon_data.shape)
-# print(data.shape)
-# gp.graphAllChannels(data.T, 17, eeg_data.shape[1])
-# # eeg_data_z = dp.z_score(eeg_data)
-# # gp.graphOneChannel(eeg_data, eeg_fs, 0, 1)
-# # gp.graphAllChannels(eeg_data, 17, eeg_fs)
-# # PCA
-# # eeg_post_pca = np.zeros_like(eeg_data.T)
-# # for time in range(eeg_data.shape[1]):
-# # eeg_post_pca, pca = dp.pca(eeg_data, 10)
-# # gp.graphAllChannels(eeg_post_pca, 17, eeg_fs)
-# # print(eeg_post_pca)
-# # print('-------------')
-# # print(pca.components_@eeg_data)
-# # eeg_backto_pca = eeg_pca.inverse_transform(eeg_post_pca)
-
-# gp.graphAllChannels(recon_data.T, 17, eeg_data.shape[1])
-
-# ecog_data_pca, recon_ecog_data = dp.pca(ecog_data.T, 200)
-# gp.graphAllChannels(ecog_data_pca.T, 20, ecog_data.shape[1])
-# gp.graphAllChannels(recon_ecog_data.T, 20, ecog_data.shape[1])
-
-# # print(eeg_backto_pca)
-# # print("--------------------------")
-# # print(eeg_post_pca)
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--test', action='store_true')
@@ -120,4 +78,32 @@ if __name__ == "__main__":
         SanityCheckFiltering()   # passed
     else:
         # example usage
+        ecog_fp = '../Datasets/20120123S11_EEGECoG_Su_Oosugi_ECoG256-EEG17/20120123S11_EEGECoG_Su_Oosugi_ECoG256-EEG17_mat/ECoG_rest.mat'
+        eeg_fp = '../Datasets/20120123S11_EEGECoG_Su_Oosugi_ECoG256-EEG17/20120123S11_EEGECoG_Su_Oosugi_ECoG256-EEG17_mat/EEG_rest.mat'
+        _, ecog_data = dp.loadMatFile(ecog_fp)
+        _, eeg_data = dp.loadMatFile(eeg_fp)
+
+        # print(eeg_data.shape) (17, 300000)
+        # print(ecog_data.shape) (256, 300000)
+        ecog_channel = ecog_data.shape[0]
+        eeg_channel = eeg_data.shape[0]
+        ecog_fs = 1000
+        eeg_fs = 1000
+
+        pca_data, eig_vec, mean, std = dp.pca(eeg_data, 2)
+        recon_data = pca_data[:,:1].dot(eig_vec[:,:1].T) * std + mean
+
+        print(recon_data.shape)
+        print(pca_data.shape)
+        gp.graphAllChannels(pca_data.T, 17, eeg_data.shape[1])
+
+        gp.graphAllChannels(recon_data.T, 17, eeg_data.shape[1])
+
+        ecog_data_pca, recon_ecog_data = dp.pca(ecog_data.T, 200)
+        gp.graphAllChannels(ecog_data_pca.T, 20, ecog_data.shape[1])
+        gp.graphAllChannels(recon_ecog_data.T, 20, ecog_data.shape[1])
+
+        # print(eeg_backto_pca)
+        # print("--------------------------")
+        # print(eeg_post_pca)
         pass
