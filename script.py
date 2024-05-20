@@ -1,13 +1,17 @@
+# Tests and example usage of our models
+
 import sys
-sys.path.append('C:/Users/chans/Documents/UW/2023_2024/SP24/CSE_481F/EEG-ECoG') # adding path for packages
+sys.path.append('../EEG-ECoG') # adding path for packages
 from utils import data_preprocessing as dp
 from visualizing import graphs as gp
 import matplotlib.pyplot as plt
 import numpy as np
+import argparse
 
 # PCA sanity check
 def SanityCheckPCA(Fs=1000, f=5, sample=1000):
     x = np.arange(sample)
+    # f = number of phases, Fs = frequency, x = sampling rate
     signal = np.sin(2 * np.pi * f * x / Fs)
     signal2 = np.sin(2 * np.pi * f * x / Fs)
     signal2[0] = signal2[1]*300
@@ -50,11 +54,21 @@ def SanityCheckWhitening():# Generate random data
     # loss = np.mean(np.square(recon_data - sum_signal))
     # print("Reconstruction loss ", loss)
 
-# def SanityCheckFiltering(data):
-#     signal = np.sin(2 * np.pi * f * x / Fs)
-#     output = dp.butter_bandpass_filter(data, lowcut, highcut, fs, order)
-#     plt.plot()
-#     plt.show()
+def SanityCheckFiltering():
+    # f = number of phases, Fs = frequency, x = sampling rate
+    signal1 = generateSineWave(0, 5, 100, 10)
+    signal2 = generateSineWave(0, 5, 100, 5)
+    output = dp.butter_bandpass_filter(signal1 + signal2, 4, 6, 100, 4)
+    fig, ax = plt.subplots(1,4, figsize= (15, 15))
+    ax[0].plot(signal1)
+    ax[1].plot(signal2)
+    ax[2].plot(signal1 + signal2)
+    ax[3].plot(output)
+    plt.show()
+
+def generateSineWave(start_time, end_time, sample_rate, frequency, amplitude=1, offset=0):
+    time = np.arange(start_time, end_time, 1/sample_rate)
+    return amplitude * np.sin(2 * np.pi * frequency * time + offset)
 
 # ecog_fp = '../Datasets/20120123S11_EEGECoG_Su_Oosugi_ECoG256-EEG17/20120123S11_EEGECoG_Su_Oosugi_ECoG256-EEG17_mat/ECoG_rest.mat'
 # eeg_fp = '../Datasets/20120123S11_EEGECoG_Su_Oosugi_ECoG256-EEG17/20120123S11_EEGECoG_Su_Oosugi_ECoG256-EEG17_mat/EEG_rest.mat'
@@ -97,5 +111,13 @@ def SanityCheckWhitening():# Generate random data
 # # print(eeg_post_pca)
 
 if __name__ == "__main__":
-    # SanityCheckPCA()       # passed
-    SanityCheckWhitening() # passed
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--test', action='store_true')
+    args = parser.parse_args()
+    if args.test is True:
+        SanityCheckPCA()       # passed
+        SanityCheckWhitening() # passed
+        SanityCheckFiltering()   # passed
+    else:
+        # example usage
+        pass
