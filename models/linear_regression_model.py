@@ -1,5 +1,6 @@
 # Linear Regression model
-
+import sys
+sys.path.append('../EEG-ECoG') # adding path for packages
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -9,29 +10,48 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 import scipy.io
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-from utils.dataloader import dataloader
+# from utils.dataloader import dataloader
+from utils import data_preprocessing as dp
 
 # Import data
 '''
 data_X = scipy.io.loadmat('data/20120904S11_EEGECoG_Chibi_Oosugi-Naoya+Nagasaka-Yasuo+Hasegawa+Naomi_ECoG128-EEG16_mat\EEG_rest.mat')
 data_y = scipy.io.loadmat('data/20120904S11_EEGECoG_Chibi_Oosugi-Naoya+Nagasaka-Yasuo+Hasegawa+Naomi_ECoG128-EEG16_mat\ECoG_rest.mat')
 '''
+data_X = dp.loadMatFile('../Datasets/20110607S2_EEGandECoG_Su_Oosugi_ECoG128-EEG18/20110607S2_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/ECoG05_anesthesia.mat')
+data_y = dp.loadMatFile('../Datasets/20110607S2_EEGandECoG_Su_Oosugi_ECoG128-EEG18/20110607S2_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/EEG05_anesthesia.mat')
+'''
+data_X = scipy.io.loadmat('../Datasets/20120904S11_EEGECoG_Chibi_Oosugi_ECoG128-EEG16/20120904S11_EEGECoG_Chibi_Oosugi_ECoG128-EEG16_mat/ECoG_rest.mat')
+data_y = scipy.io.loadmat('../Datasets/20120904S11_EEGECoG_Chibi_Oosugi_ECoG128-EEG16/20120904S11_EEGECoG_Chibi_Oosugi_ECoG128-EEG16_mat/EEG_rest.mat')
+'''
 
-# data_X = scipy.io.loadmat('../Datasets/20120904S11_EEGECoG_Chibi_Oosugi_ECoG128-EEG16/20120904S11_EEGECoG_Chibi_Oosugi_ECoG128-EEG16_mat/ECoG_rest.mat')
-# data_y = scipy.io.loadmat('../Datasets/20120904S11_EEGECoG_Chibi_Oosugi_ECoG128-EEG16/20120904S11_EEGECoG_Chibi_Oosugi_ECoG128-EEG16_mat/EEG_rest.mat')
+X = data_X[1]
+y = data_y[1]
 
-# X = data_X['EEG']
-# y = data_y['ECoG']
-# X = X.T
-# y = y.T
+print(X.shape)
+print(y.shape)
+# downsample if mismatch in size of datasets
+if data_X[1].shape[1] != data_y[1].shape[1]:
+    # gaussian normalization
+    if X.shape[1] > y.shape[1]:
+        X = dp.downsample_data(4029, 1, X, y.shape[1])
+    elif X.shape[1] < y.shape[1]:
+        y = dp.downsample_data(4029, 1,  y, X.shape[1])
+        
+X = X.T
+y = y.T
 
-# # Split data into training, validation and test
-# X_train, X_temp, y_train, y_temp = train_test_split(X, y, test_size=0.9, random_state=42)
-# X_val, X_test, y_val, y_test = train_test_split(X_temp, y_temp, test_size=0.8, random_state=42)
+print(X.shape)
+print(y.shape)
+# Split data into training, validation and test
+X_train, X_temp, y_train, y_temp = train_test_split(X, y, test_size=0.2, random_state=42)
+X_val, X_test, y_val, y_test = train_test_split(X_temp, y_temp, test_size=0.5, random_state=42)
 
-# scaler = StandardScaler()
-# X_train = scaler.fit_transform(X_train)
-# X_val = scaler.fit_transform(X_val)
+
+# Normalize X 
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_val = scaler.fit_transform(X_val)
 
 # '''
 # X_train = X_train.T
@@ -42,26 +62,37 @@ data_y = scipy.io.loadmat('data/20120904S11_EEGECoG_Chibi_Oosugi-Naoya+Nagasaka-
 # y_test = y_test.T
 # '''
 
-# print("Train shapes:", X_train.shape, y_train.shape)
-# print("Validation shapes:", X_val.shape, y_val.shape)
-# print("Test shapes:", X_test.shape, y_test.shape)
+print("Train shapes:", X_train.shape, y_train.shape)
+print("Validation shapes:", X_val.shape, y_val.shape)
+print("Test shapes:", X_test.shape, y_test.shape)
 
-# # Convert numpy arrays to PyTorch tensors
-# X_tensor = torch.tensor(X_train, dtype=torch.float32)
-# y_tensor = torch.tensor(y_train, dtype=torch.float32)
+# Convert numpy arrays to PyTorch tensors
+X_tensor = torch.tensor(X_train, dtype=torch.float32)
+y_tensor = torch.tensor(y_train, dtype=torch.float32)
 
 # Define a simple linear regression model
 class LinearRegressionModel(nn.Module):
     def __init__(self, input_size, output_size):
         super(LinearRegressionModel, self).__init__()
         self.linear = nn.Linear(input_size, output_size)
+        '''
+        self.fc2 = nn.Linear(64, 32)
+        self.fc3 = nn.Linear(32, 16)
+        '''
 
     def forward(self, x):
+        '''
+        x = torch.relu(self.fc1(x))
+        x = torch.relu(self.fc2(x))
+        x = self.fc3(x)
+        '''
         return self.linear(x)
 
 # Instantiate the model
-input_size = X_tensor.size(1)  # 16
-output_size = y_tensor.size(1)  # 128
+input_size = X_tensor.size(1)  # 129 (ecog)
+output_size = y_tensor.size(1)  # 19 (eeg)
+print(input_size)
+print(output_size)
 model = LinearRegressionModel(input_size, output_size)
 
 # Define loss function and optimizer
@@ -69,9 +100,9 @@ criterion = nn.MSELoss()
 optimizer = optim.SGD(model.parameters(), lr=0.001)
 
 # Create DataLoader for batch processing
-# dataset = TensorDataset(X_tensor, y_tensor)
-# dataloader = DataLoader(dataset, batch_size=32, shuffle=True)
-dataloader = dataloader(batch_size=32, shuffle=True)
+dataset = TensorDataset(X_tensor, y_tensor)
+dataloader = DataLoader(dataset, batch_size=32, shuffle=True)
+# dataloader = dataloader(batch_size=32, shuffle=True)
 
 # Keep track of loss and error
 loss_values = []
@@ -125,7 +156,7 @@ plt.ylabel('MSE')
 plt.title('Mean Squared Error')
 
 plt.tight_layout()
-plt.show()
+plt.savefig('loss_mse_linreg.png')
 
 # Evaluate on validation set
 
