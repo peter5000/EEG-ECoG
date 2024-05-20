@@ -3,7 +3,7 @@ import scipy.io
 import mat73
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.signal import butter, lfilter
+from scipy.signal import butter, lfilter, convolve2d
 
 # Input format: string (file path)
 # output format: (file name, signal)
@@ -105,12 +105,34 @@ def butter_bandpass_filter(data, lowcut, highcut, fs, order=4):
 
 # size: size of gaussian window, sigma: higher the value, smoother the gaussian, data: data, new_length: new_length
 def downsample_data(size, sigma, data, new_length):
+    
     kernel = np.exp(-0.5 * (np.arange(size) - size // 2)**2 / sigma**2)
     kernel = kernel / np.sum(kernel)
-    smoothed_data = np.convolve(data, kernel, mode='same')
-    x_original = np.linspace(0, 1, len(smoothed_data))
+    # smoothed_data = np.convolve(data, kernel, mode='same')
+    smoothed_data = np.array([np.convolve(row, kernel, mode='same') for row in data])
+    x_original = np.linspace(0, 1, smoothed_data.shape[1])
     x_new = np.linspace(0, 1, new_length)
-    return np.interp(x_new, x_original, smoothed_data)
+    print(x_original.shape)
+    print(smoothed_data.shape)
+    return np.array([np.interp(x_new, x_original, row) for row in smoothed_data])
+    '''
+    # Define the kernel size and create a sample kernel (for example, a simple averaging kernel)
+    # Using mode='valid' to reduce size
+    kernel_size = 4029
+    kernel = np.ones(kernel_size) / kernel_size
+
+    # Convolve each row with the kernel
+    convolved_data = np.array([np.convolve(row, kernel, mode='valid') for row in data])
+    # Create a 2D kernel that has 1 row and `kernel_size` columns (e.g., a simple averaging kernel)
+    kernel = np.ones((1, kernel_size)) / kernel_size
+
+    # Perform the convolution
+    convolved_data = convolve2d(data, kernel, mode='valid', boundary='wrap')
+    # Check the shape of the result
+    print(convolved_data.shape)  # Expected output: (19, 319234)
+    return convolved_data
+    '''
+
 
 # Example usages
 if __name__ == "__main__":
