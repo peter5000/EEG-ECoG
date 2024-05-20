@@ -85,12 +85,12 @@ if __name__ == "__main__":
 
         # print(eeg_data.shape) (17, 300000)
         # print(ecog_data.shape) (256, 300000)
-        ecog_channel = ecog_data.shape[0]
-        eeg_channel = eeg_data.shape[0]
         ecog_fs = 1000
         eeg_fs = 1000
+        ecog_channel = ecog_data[:,:ecog_fs*5].shape[0]
+        eeg_channel = eeg_data[:,:ecog_fs*5].shape[0]
 
-        pca_data, eig_vec, mean, std = dp.pca(eeg_data, 2)
+        pca_data, eig_vec, mean, std = dp.pca(eeg_data.T, 2)
         recon_data = pca_data[:,:1].dot(eig_vec[:,:1].T) * std + mean
 
         print(recon_data.shape)
