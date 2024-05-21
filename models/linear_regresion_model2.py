@@ -98,7 +98,7 @@ def test(X_tensor, y_tensor, model, loss_fn):
         corcs = []
         print("y_tensor.shape: ", y_tensor.shape)
         for i in range(y_tensor.shape[1]):
-            corc = torch.corrcoef(torch.stack((y_pred[:,i], y_tensor[:,i])).T)
+            corc = torch.corrcoef(torch.stack((y_pred[:,i], y_tensor[:,i])))
             corcs.append(corc)
         avg_corcs = np.average(corcs)
         print(f"Test Error: \n Accuracy: {(100*avg_corcs):>0.1f}%, Avg loss: {test_loss:>8f} \n")
@@ -107,7 +107,6 @@ def test(X_tensor, y_tensor, model, loss_fn):
 # 4-fold cross-validation
 k = 4
 loss_dict = {}
-mse_dict = {}
 for i in range(k):
     X_train_new = np.vstack((X_train[:i*X_train.shape[0]//k,:],X_train[(i+1)*X_train.shape[0]//k:,:]))
     X_val = X_train[i*X_train.shape[0]//k:(i+1)*X_train.shape[0]//k,:]
@@ -123,10 +122,12 @@ for i in range(k):
     high_bound = 45
     sampling_rate = 1000
 
+    print("filtering...")
     # bandwidth_butterworth_filter
     X_train_filtered = dp.butter_bandpass_filter(X_train_new.T, low_bound, high_bound, sampling_rate)
     X_val_filtered = dp.butter_bandpass_filter(X_val.T, low_bound, high_bound, sampling_rate)
 
+    print("whitening...")
     # PCA whitening
     X_train_w = dp.whitening(X_train_filtered.T)
     X_val_w = dp.whitening(X_val_filtered.T)
@@ -183,21 +184,18 @@ for i in range(k):
 
     # Evaluate on validation set
 
-    X_val_tensor = torch.tensor(X_val, dtype=torch.float32)
+    X_val_tensor = torch.tensor(X_val.T, dtype=torch.float32)
     y_val_tensor = torch.tensor(y_val, dtype=torch.float32)
 
-    # Make predictions on validation set
-    model.eval()
-    with torch.no_grad():
-        y_pred = model(X_val_tensor)
+    test(X_val_tensor, y_val_tensor, model, loss_fn)
 
-    # Calculate evaluation metrics
-    mse = mean_squared_error(y_val_tensor.numpy(), y_pred.numpy())
-    rmse = mean_squared_error(y_val_tensor.numpy(), y_pred.numpy(), squared=False)
-    mae = mean_absolute_error(y_val_tensor.numpy(), y_pred.numpy())
-    r2 = r2_score(y_val_tensor.numpy(), y_pred.numpy())
+    # # Calculate evaluation metrics
+    # mse = mean_squared_error(y_val_tensor.numpy(), y_pred.numpy())
+    # rmse = mean_squared_error(y_val_tensor.numpy(), y_pred.numpy(), squared=False)
+    # mae = mean_absolute_error(y_val_tensor.numpy(), y_pred.numpy())
+    # r2 = r2_score(y_val_tensor.numpy(), y_pred.numpy())
 
-    print(f'Mean Squared Error (MSE): {mse:.4f}')
-    print(f'Root Mean Squared Error (RMSE): {rmse:.4f}')
-    print(f'Mean Absolute Error (MAE): {mae:.4f}')
-    print(f'R-squared (R2): {r2:.4f}')
+    # print(f'Mean Squared Error (MSE): {mse:.4f}')
+    # print(f'Root Mean Squared Error (RMSE): {rmse:.4f}')
+    # print(f'Mean Absolute Error (MAE): {mae:.4f}')
+    # print(f'R-squared (R2): {r2:.4f}')
