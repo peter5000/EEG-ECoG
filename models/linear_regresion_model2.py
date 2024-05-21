@@ -1,7 +1,7 @@
 # Linear Regression model
 
 import sys
-sys.path.append('../EEG-ECoG') # adding path for packages
+sys.path.append('../../EEG-ECoG') # adding path for packages
 import torch
 import torch.nn as nn
 import torch.optim as optim
