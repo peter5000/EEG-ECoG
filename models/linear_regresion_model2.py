@@ -184,8 +184,8 @@ for i in range(k):
 
     # Evaluate on validation set
 
-    X_val_tensor = torch.tensor(X_val.T, dtype=torch.float32)
-    y_val_tensor = torch.tensor(y_val, dtype=torch.float32)
+    X_val_tensor = torch.tensor(X_val.T, dtype=torch.float32).to(device)
+    y_val_tensor = torch.tensor(y_val, dtype=torch.float32).to(device)
 
     test(X_val_tensor, y_val_tensor, model, loss_fn)
 
