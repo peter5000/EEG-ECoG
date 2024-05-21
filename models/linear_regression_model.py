@@ -37,7 +37,7 @@ if data_X[1].shape[1] != data_y[1].shape[1]:
         X = dp.downsample_data(4029, 1, X, y.shape[1])
     elif X.shape[1] < y.shape[1]:
         y = dp.downsample_data(4029, 1,  y, X.shape[1])
-        
+
 X = X.T
 y = y.T
 
@@ -48,7 +48,7 @@ X_train, X_temp, y_train, y_temp = train_test_split(X, y, test_size=0.2, random_
 X_val, X_test, y_val, y_test = train_test_split(X_temp, y_temp, test_size=0.5, random_state=42)
 
 
-# Normalize X 
+# Normalize X
 scaler = StandardScaler()
 X_train = scaler.fit_transform(X_train)
 X_val = scaler.fit_transform(X_val)
@@ -120,15 +120,15 @@ for epoch in range(num_epochs):
 
         # Calculate MSE
         mse = torch.mean((outputs - labels) ** 2)
-        
+
         # Backward pass and optimization
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
-        
+
         epoch_loss += loss.item() * inputs.size(0)
         epoch_mse += mse.item() * inputs.size(0)
-    
+
     # Calculate average loss and mse for the epoch
     epoch_loss /= len(dataloader.dataset)
     epoch_mse /= len(dataloader.dataset)
@@ -136,10 +136,48 @@ for epoch in range(num_epochs):
     # Append the loss values to the lists
     loss_values.append(epoch_loss)
     mse_values.append(epoch_mse)
-    
+
     # Print progress
     if (epoch+1) % 10 == 0:
         print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}')
+
+# # 4-fold cross-validation
+# k = 4
+# loss_dict = {}
+# mse_dict = {}
+# for i in range(k):
+#     X_train_new = np.vstack((X_train[:i*X_train.shape[0]//k,:],X_train[(i+1)*X_train.shape[0]//k:,:]))
+#     X_val = X_train[i*X_train.shape[0]//k:(i+1)*X_train.shape[0]//k,:]
+#     # print("X_train_new shape: ",X_train_new.shape) # (215482, 129)
+#     # print("X_val shape: ",X_val.shape)             # (71827, 129)
+#     y_train_new = np.vstack((y_train[:i*y_train.shape[0]//k,:],y_train[(i+1)*y_train.shape[0]//k:,:]))
+#     y_val = y_train[i*y_train.shape[0]//k:(i+1)*y_train.shape[0]//k,:]
+#     # print("y_train_new shape: ",y_train_new.shape) # (215482, 19)
+#     # print("y_val shape: ",y_val.shape)             # (71827, 19)
+
+#     # possible hyperparameters
+#     low_bound = 0.5
+#     high_bound = 45
+#     sampling_rate = 1000
+#     X_train_filtered = dp.butter_bandpass_filter(X_train_new.T, low_bound, high_bound, sampling_rate)
+#     X_val_filtered = dp.butter_bandpass_filter(X_val.T, low_bound, high_bound, sampling_rate)
+
+#     # PCA whitening
+#     X_train_w = dp.whitening(X_train_filtered.T)
+#     X_val_w = dp.whitening(X_val_filtered.T)
+
+#     # Convert numpy arrays to PyTorch tensors
+#     X_tensor = torch.tensor(X_train, dtype=torch.float32)
+#     y_tensor = torch.tensor(y_train, dtype=torch.float32)
+
+#     # Instantiate the model
+#     input_size = X_tensor.size(1)   # 129
+#     output_size = y_tensor.size(1)  # 19
+#     model = LinearRegressionModel(input_size, output_size)
+
+#     # Define loss function and optimizer
+#     loss_fn = nn.MSELoss()
+#     optimizer = optim.Adam(model.parameters(), lr=0.001, betas=(0.9,0.99))
 
 # Plot loss function and MSE
 plt.figure(figsize=(10, 5))
