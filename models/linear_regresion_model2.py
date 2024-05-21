@@ -40,6 +40,9 @@ eeg_data = dp.downsample_data(eeg_data, ecog_data.shape[1])
 eeg_data = eeg_data.T     # (samples, channel)
 ecog_data = ecog_data.T   # (samples, channel)
 
+print("eeg_data.shape: ", eeg_data.shape)
+print("ecog_data.shape: ", ecog_data.shape)
+
 # Split data into training, validation and test
 random_section = random.randint(0,9)
 X_train = np.vstack((ecog_data[:ecog_data.shape[0]*random_section//10,:], ecog_data[ecog_data.shape[0]*(random_section+1)//10:,:]))
@@ -131,7 +134,7 @@ for i in range(k):
 
     # Convert numpy arrays to PyTorch tensors
     X_tensor = torch.tensor(X_train_w.T, dtype=torch.float32)
-    y_tensor = torch.tensor(y_train, dtype=torch.float32)
+    y_tensor = torch.tensor(y_train_new, dtype=torch.float32)
     print("X_tensor shape", X_tensor.shape)
     print("y_tensor shape", y_tensor.shape)
 
