@@ -1,7 +1,7 @@
 # Linear Regression model
 
 import sys
-sys.path.append('../../EEG-ECoG') # adding path for packages
+sys.path.append('../EEG-ECoG') # adding path for packages
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -27,8 +27,8 @@ class LinearRegressionModel(nn.Module):
         return self.linear(x)
 
 # Import data
-eeg_path = '../Datasets/20110607S2_EEGECoG_Su_Oosugi_ECoG128-EEG18/20110607S2_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/EEG05_anesthesia.mat'
-ecog_path = '../Datasets/20110607S2_EEGECoG_Su_Oosugi_ECoG128-EEG18/20110607S2_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/ECoG05_anesthesia.mat'
+eeg_path = '../Datasets/20110607S2_EEGandECoG_Su_Oosugi_ECoG128-EEG18/20110607S2_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/ECoG05_anesthesia.mat'
+ecog_path = '../Datasets/20110607S2_EEGandECoG_Su_Oosugi_ECoG128-EEG18/20110607S2_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/EEG05_anesthesia.mat'
 _, eeg_data = dp.loadMatFile(eeg_path)
 _, ecog_data = dp.loadMatFile(ecog_path)
 # print(eeg_data.shape)   (19, 323262)
