@@ -35,11 +35,8 @@ _, ecog_data = dp.loadMatFile(ecog_path)
 # print(ecog_data.shape)  (129, 319234)
 
 # downsample eeg to ecog
-for ch in range(eeg_data.shape[0]):
-    new_eeg_data = np.zeros((eeg_data.shape[0], ecog_data.shape[1]))
-    new_eeg_data[ch] = dp.downsample_data(eeg_data[ch], ecog_data.shape[1])
+eeg_data = dp.downsample_data(eeg_data, ecog_data.shape[1])
 
-eeg_data = new_eeg_data
 eeg_data = eeg_data.T     # (samples, channel)
 ecog_data = ecog_data.T   # (samples, channel)
 
