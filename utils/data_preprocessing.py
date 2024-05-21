@@ -115,7 +115,7 @@ def downsample_data(data, new_length, size=15, sigma=1):
     kernel = kernel / np.sum(kernel)
     # smoothed_data = np.convolve(data, kernel, mode='same')
     smoothed_data = np.array([np.convolve(row, kernel, mode='same') for row in data])
-    x_original = np.linspace(0, 1, len(smoothed_data))
+    x_original = np.linspace(0, 1, smoothed_data.shape[1])
     x_new = np.linspace(0, 1, new_length)
     print(x_original.shape)
     print(smoothed_data.shape)
