@@ -34,9 +34,9 @@ print(y.shape)
 if data_X[1].shape[1] != data_y[1].shape[1]:
     # gaussian normalization
     if X.shape[1] > y.shape[1]:
-        X = dp.downsample_data(4029, 1, X, y.shape[1])
+        X = dp.downsample_data(X, y.shape[1])
     elif X.shape[1] < y.shape[1]:
-        y = dp.downsample_data(4029, 1,  y, X.shape[1])
+        y = dp.downsample_data(y, X.shape[1])
 
 X = X.T
 y = y.T
