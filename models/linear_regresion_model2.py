@@ -19,8 +19,9 @@ import random
 
 def init_weights(m):
     if isinstance(m, nn.Linear):
-        nn.init.xavier_uniform_(m.weight)
-        # nn.init.kaiming_normal_(m.weight)
+        nn.init.normal_(m.weight)
+    elif isinstance(m, SaverModule):
+        nn.init.normal_(m.module.weight)
 
 # Define a simple linear regression model
 class LinearRegressionModel(nn.Module):
@@ -31,9 +32,9 @@ class LinearRegressionModel(nn.Module):
     def forward(self, x):
         return self.linear(x)
 
-class LinearRegressionModel2(nn.Module):
+class MultiLayerPerceptron(nn.Module):
     def __init__(self, input_size, hidden_size, output_size):
-        super(LinearRegressionModel2, self).__init__()
+        super(MultiLayerPerceptron, self).__init__()
         self.linear_relu_stack = nn.Sequential(
             nn.Linear(input_size, hidden_size),
             nn.ReLU(),
@@ -43,9 +44,9 @@ class LinearRegressionModel2(nn.Module):
     def forward(self, x):
         return self.linear_relu_stack(x)
 
-class LinearRegressionModel3(nn.Module):
+class MultiLayerPerceptron2(nn.Module):
     def __init__(self, input_size, hidden_size1, hidden_size2, output_size):
-        super(LinearRegressionModel3, self).__init__()
+        super(MultiLayerPerceptron2, self).__init__()
         self.linear_relu_stack = nn.Sequential(
             nn.Linear(input_size, hidden_size1),
             nn.ReLU(),
@@ -56,6 +57,17 @@ class LinearRegressionModel3(nn.Module):
 
     def forward(self, x):
         return self.linear_relu_stack(x)
+
+class SaverModule(nn.Module):
+    def __init__(self, module):
+        super().__init__()
+        self.module = module
+        self.saved_output = None
+
+    def forward(self, x):
+        output = self.module(x)
+        self.saved_output = output
+        return output
 
 # Import data
 eeg_path = '../Datasets/20110607S2_EEGandECoG_Su_Oosugi_ECoG128-EEG18/20110607S2_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/EEG05_anesthesia.mat'
@@ -167,6 +179,9 @@ def train(dataloader, model, loss_fn, optimizer):
             loss, current = loss.item(), (batch + 1) * len(X)
             print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
 
+            if isinstance(model[0], SaverModule):
+                print("first layer", model[0].saved_output)
+
     return epoch_loss
 
 def test(X_tensor, y_tensor, model, loss_fn):
@@ -187,85 +202,85 @@ def test(X_tensor, y_tensor, model, loss_fn):
 
 # -----------------------------------------------------------------------------
 # Synthetic data test
-X = torch.tensor(synth_ecog, dtype=torch.float32).T
-y = torch.tensor(synth_eeg, dtype=torch.float32).T
-print(y.shape)
-print(X.shape)
-dataset = TensorDataset(X, y)
-dataloader = DataLoader(dataset, batch_size=32, shuffle=True)
-model = LinearRegressionModel(X.shape[1], y.shape[1]).to(device)
-loss_fn = nn.MSELoss()
-optimizer = optim.Adam(model.parameters(), lr=0.001, betas=(0.9,0.99))
+# X = torch.tensor(synth_ecog, dtype=torch.float32).T
+# y = torch.tensor(synth_eeg, dtype=torch.float32).T
+# print(y.shape)
+# print(X.shape)
+# dataset = TensorDataset(X, y)
+# dataloader = DataLoader(dataset, batch_size=32, shuffle=True)
+# model = LinearRegressionModel(X.shape[1], y.shape[1]).to(device)
+# loss_fn = nn.MSELoss()
+# optimizer = optim.Adam(model.parameters(), lr=0.001, betas=(0.9,0.99))
 
-loss_values = []
-num_epochs = 10
-for epoch in range(num_epochs):
-    epoch_loss = train(dataloader, model, loss_fn, optimizer)
+# loss_values = []
+# num_epochs = 10
+# for epoch in range(num_epochs):
+#     epoch_loss = train(dataloader, model, loss_fn, optimizer)
 
-    # Calculate average loss for the epoch
-    epoch_loss /= len(dataloader.dataset)
+#     # Calculate average loss for the epoch
+#     epoch_loss /= len(dataloader.dataset)
 
-    # Append the loss values to the lists
-    loss_values.append(epoch_loss)
+#     # Append the loss values to the lists
+#     loss_values.append(epoch_loss)
 
-    # Print progress
-    if (epoch+1) % 10 == 0:
-        print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {epoch_loss:.4f}')
+#     # Print progress
+#     if (epoch+1) % 10 == 0:
+#         print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {epoch_loss:.4f}')
 
-# Plot loss function and MSE
-plt.figure(figsize=(5, 5))
-plt.plot(range(1, num_epochs + 1), loss_values, label='loss')
-plt.legend()
-plt.yscale('log')
-plt.xlabel('Epoch')
-plt.ylabel('Loss')
-plt.title('Synthetic ECoG to Synthetic EEG')
+# # Plot loss function and MSE
+# plt.figure(figsize=(5, 5))
+# plt.plot(range(1, num_epochs + 1), loss_values, label='loss')
+# plt.legend()
+# plt.yscale('log')
+# plt.xlabel('Epoch')
+# plt.ylabel('Loss')
+# plt.title('Synthetic ECoG to Synthetic EEG')
 
-plt.tight_layout()
-plt.show()
+# plt.tight_layout()
+# plt.show()
 # -----------------------------------------------------------------------------
 # aggregate ecog
-agg_ecog = np.zeros((4,319234))
-agg_ecog[0] = ecog_data[9] + ecog_data[10] + ecog_data[16] + ecog_data[17]
-agg_ecog[1] = ecog_data[41] + ecog_data[42] + ecog_data[52] + ecog_data[53]
-agg_ecog[2] = ecog_data[88] + ecog_data[89] + ecog_data[92] + ecog_data[93]
-agg_ecog[3] = ecog_data[108] + ecog_data[94] + ecog_data[109] + ecog_data[123]
-agg_ecog /= 4
-X = torch.tensor(ecog_data, dtype=torch.float32).T
-y = torch.tensor(agg_ecog, dtype=torch.float32).T
-print(y.shape)
-print(X.shape)
-dataset = TensorDataset(X, y)
-dataloader = DataLoader(dataset, batch_size=32, shuffle=True)
-hidden_size = 50
-# model = LinearRegressionModel(X.shape[1], y.shape[1]).to(device)
-model = LinearRegressionModel2(X.shape[1], hidden_size, y.shape[1]).to(device)  # hidden_size=50, lr=5e-5, end_loss=0.0556
-loss_fn = nn.MSELoss()
-optimizer = optim.Adam(model.parameters(), lr=5e-5, betas=(0.9,0.99))
+# agg_ecog = np.zeros((4,319234))
+# agg_ecog[0] = ecog_data[9] + ecog_data[10] + ecog_data[16] + ecog_data[17]
+# agg_ecog[1] = ecog_data[41] + ecog_data[42] + ecog_data[52] + ecog_data[53]
+# agg_ecog[2] = ecog_data[88] + ecog_data[89] + ecog_data[92] + ecog_data[93]
+# agg_ecog[3] = ecog_data[108] + ecog_data[94] + ecog_data[109] + ecog_data[123]
+# agg_ecog /= 4
+# X = torch.tensor(ecog_data, dtype=torch.float32).T
+# y = torch.tensor(agg_ecog, dtype=torch.float32).T
+# print(y.shape)
+# print(X.shape)
+# dataset = TensorDataset(X, y)
+# dataloader = DataLoader(dataset, batch_size=32, shuffle=True)
+# hidden_size = 50
+# # model = LinearRegressionModel(X.shape[1], y.shape[1]).to(device)
+# model = MultiLayerPerceptron(X.shape[1], hidden_size, y.shape[1]).to(device)  # hidden_size=50, lr=5e-5, end_loss=0.0556
+# loss_fn = nn.MSELoss()
+# optimizer = optim.Adam(model.parameters(), lr=5e-5, betas=(0.9,0.99))
 
-loss_values = []
-num_epochs = 10
-for epoch in range(num_epochs):
-    epoch_loss = train(dataloader, model, loss_fn, optimizer)
+# loss_values = []
+# num_epochs = 10
+# for epoch in range(num_epochs):
+#     epoch_loss = train(dataloader, model, loss_fn, optimizer)
 
-    # Calculate average loss for the epoch
-    epoch_loss /= len(dataloader.dataset)
+#     # Calculate average loss for the epoch
+#     epoch_loss /= len(dataloader.dataset)
 
-    # Append the loss values to the lists
-    loss_values.append(epoch_loss)
+#     # Append the loss values to the lists
+#     loss_values.append(epoch_loss)
 
-    # Print progress
-    print(f'Epoch [{epoch+1}/{num_epochs}], train_Loss: {epoch_loss:.4f}')
+#     # Print progress
+#     print(f'Epoch [{epoch+1}/{num_epochs}], train_Loss: {epoch_loss:.4f}')
 
-# Plot loss function and MSE
-plt.figure(figsize=(5, 5))
-plt.plot(range(1, num_epochs + 1), loss_values, label='Loss')
-plt.xlabel('Epoch')
-plt.ylabel('Loss')
-plt.title('ECoG to Aggregate ECoG')
+# # Plot loss function and MSE
+# plt.figure(figsize=(5, 5))
+# plt.plot(range(1, num_epochs + 1), loss_values, label='Loss')
+# plt.xlabel('Epoch')
+# plt.ylabel('Loss')
+# plt.title('ECoG to Aggregate ECoG')
 
-plt.tight_layout()
-plt.show()
+# plt.tight_layout()
+# plt.show()
 
 # -----------------------------------------------------------------------------
 # Run with actual data
@@ -339,9 +354,17 @@ dataloader = DataLoader(dataset, batch_size=32, shuffle=True)
 hidden_size1 = 80
 hidden_size2 = 30
 # model = LinearRegressionModel(X.shape[1], y.shape[1]).to(device)
-model = LinearRegressionModel2(X.shape[1], hidden_size1, y.shape[1]).to(device)  #
-# model = LinearRegressionModel3(X.shape[1], hidden_size1, hidden_size2, y.shape[1]).to(device)  #
-# model.apply(init_weights)
+# model = MultiLayerPerceptron(X.shape[1], hidden_size1, y.shape[1]).to(device)  #
+# model = MultiLayerPerceptron2(X.shape[1], hidden_size1, hidden_size2, y.shape[1]).to(device)  #
+model = nn.Sequential(
+    SaverModule(nn.Linear(X.shape[1], hidden_size1)),
+    nn.ReLU(),
+    SaverModule(nn.Linear(hidden_size1, hidden_size2)),
+    nn.ReLU(),
+    SaverModule(nn.Linear(hidden_size2, y.shape[1])),
+).to(device)
+
+model.apply(init_weights)
 loss_fn = nn.MSELoss()
 # optimizer = optim.Adam(model.parameters(), lr=5e-4, betas=(0.9,0.99))
 optimizer = optim.SGD(model.parameters(), lr=1e-7, momentum=0.9, nesterov=True)
@@ -349,7 +372,7 @@ optimizer = optim.SGD(model.parameters(), lr=1e-7, momentum=0.9, nesterov=True)
 train_losses = []
 val_losses = []
 accs = []
-num_epochs = 5
+num_epochs = 100
 for epoch in range(num_epochs):
     epoch_loss = train(dataloader, model, loss_fn, optimizer)
 
