@@ -189,11 +189,14 @@ class GraphWindow(QMainWindow):
 
     def plot_csv_original_data(self, df):
         self.left_graph_ax.clear()
+        data = df.to_numpy()[:, 1:]
         x = df.index
-        print(df)
-        for column in df.columns:
-            y = df[column]
-            self.left_graph_ax.plot(x, y, marker='.', linestyle='-')
+        # for column in df.columns:
+        #     y = df[column]
+        #     self.left_graph_ax.plot(x, y, marker='.', linestyle='-')
+        for ch in range(len(x)):
+            y = data[ch]
+            self.left_graph_ax.plot(np.arange(df.shape[1]-1), y, linestyle='-')
 
         self.left_graph_ax.set_xlabel('Row Index')
         self.left_graph_ax.set_ylabel('Values')
@@ -212,7 +215,10 @@ class GraphWindow(QMainWindow):
         self.right_graph_ax.clear()
         for column in range(df.shape[1]):
             y = df[:,column]
-            self.right_graph_ax.plot(np.arange(df.shape[0]), y.detach().numpy(), marker='.', linestyle='-')
+            self.right_graph_ax.plot(np.arange(df.shape[0]), y.detach().numpy(), linestyle='-')
+        # for column in range(df.shape[0]):
+        #     y = df[column,:]
+        #     self.right_graph_ax.plot(columns_name, y.detach().numpy(), marker='.', linestyle='-')
 
         self.transformed_data = df
         self.right_graph_ax.set_xlabel('Row Index')
