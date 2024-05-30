@@ -1,7 +1,6 @@
 # remember first "pip install positional-encodings[pytorch]"
 from positional_encodings.torch_encodings import PositionalEncoding1D, Summer
 import torch
-import model
 from torch.utils.data import Dataset
 
 class TransformerDataset(Dataset):
