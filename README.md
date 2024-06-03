@@ -40,9 +40,9 @@ other options for `--test` argument: \
 [whitening, filtering, sinetosine, ecogtoagg]
 
 ### Train/Predict our Transformer model
-Follow the instructions in models/transformer_EECoG_20min_with_accuracy.ipynb.
-This notebook provides the best example of how to use the models/transformer_model.py, utils/TransformerDataset.py
-You will need to download the dataset from the website (http://www.www.neurotycho.org/expdatalist/listview?task=45) if you are training the model. (Our GitHub repo has limited storage to hold all these data.)
+Follow the instructions in models/transformer_EECoG_20min_with_accuracy.ipynb.\
+This notebook provides the best example of how to use the models/transformer_model.py, utils/TransformerDataset.py\
+You will need to download the dataset from the website (http://www.www.neurotycho.org/expdatalist/listview?task=45) if you are training the model. (Our GitHub repo has limited storage to hold all these data.)\
 You can also restore the fine-tuned weights from output\transfomer_weights to predict outputs.
 
 Check out models\transformer_EECoG_20min_twoMonkey.ipynb and models\transformer_EECoG_synth.ipynb for the transformer model performance on the other monkey's datasets and synthetic dataset.
@@ -53,7 +53,7 @@ Check out models\transformer_EECoG_20min_twoMonkey.ipynb and models\transformer_
 You can run a model by importing csv file and save the result by clicking save file.
 
 ## File Structure
-data/ where our data for sanity check is lying 
+data/ where our data for sanity check is lying\
 gui/ GUI 
 models/ different versions and types of models 
 output/ primary output directory of our graphs 
