@@ -53,12 +53,15 @@ Check out models\transformer_EECoG_20min_twoMonkey.ipynb and models\transformer_
 You can run a model by importing csv file and save the result by clicking save file.
 
 ## File Structure
-data/ where our data for sanity check is lying\
-gui/ GUI \ 
-models/ different versions and types of models\ 
-output/ primary output directory of our graphs\ 
-utils/ dataloading and data preprocessing codes\ 
-visualizing/ graphing 
+- `data/`: Contains the data for sanity checks.
+- `gui/`: Directory for the graphical user interface.
+- `models/`: Contains different versions and types of models.
+- `output/`: Primary output directory for generated graphs.
+- `utils/`: Contains code for data loading and preprocessing.
+- `visualizing/`: Directory for graphing and visualizations.
 
-model_eval.py: training our model \
-sanity_checks.py: test file
+## Scripts
+
+- `model_eval.py`: Script for training our linear model.
+- `sanity_checks.py`: Script for running test files.
+- `models/transformer_EECoG_20min_with_accuracy.ipynb`: Example Script for training, testing, and predicting transformer model
