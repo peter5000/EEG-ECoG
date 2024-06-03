@@ -2,7 +2,7 @@
 Project on Converting between EEG and ECoG
 
 ## Assumption
-Python 3.10.x or higher \
+Python 3.10.x or higher\
 
 Miniconda enviornment [link](https://docs.anaconda.com/free/miniconda/miniconda-install/)
 
@@ -11,7 +11,7 @@ Example:
 
 ## Setup
 
-environment: `pip install -r requirements.txt` \
+environment: `pip install -r requirements.txt`\
 Dataset [link](http://www.www.neurotycho.org/expdatalist/listview?task=45)
 
 We specifically used `20110607S2/EEG05_anesthesia.mat` and `20110607S2/ECoG05_anesthesia.mat` to train our model
@@ -21,10 +21,10 @@ We specifically used `20110607S2/EEG05_anesthesia.mat` and `20110607S2/ECoG05_an
 ### Train our linear model
 `python model_eval.py --eeg_path "your relative path" --ecog_path "your relative path" --output_root "root path for graph"`
 
-other optional arguments: \
+other optional arguments:\
 --optim sgd or --optim adam (for different optimizer functions)\
 --epoch `int` (for desired number of epochs)\
---lr `float` (for desired learning rate) \
+--lr `float` (for desired learning rate)\
 --nesterov (set the flag to enable nesterov momentum with value=0.9)
 
 Output graphs will be stored in output_root folder that is inputed
@@ -36,7 +36,7 @@ or
 
 `python sanity_checks.py --test whitening`
 
-other options for `--test` argument: \
+other options for `--test` argument:\
 [whitening, filtering, sinetosine, ecogtoagg]
 
 ### Train/Predict our Transformer model
@@ -54,10 +54,10 @@ You can run a model by importing csv file and save the result by clicking save f
 
 ## File Structure
 data/ where our data for sanity check is lying\
-gui/ GUI 
-models/ different versions and types of models 
-output/ primary output directory of our graphs 
-utils/ dataloading and data preprocessing codes 
+gui/ GUI\ 
+models/ different versions and types of models\ 
+output/ primary output directory of our graphs\ 
+utils/ dataloading and data preprocessing codes\ 
 visualizing/ graphing 
 
 model_eval.py: training our model \
