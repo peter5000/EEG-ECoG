@@ -1,19 +1,56 @@
 # EEG-ECoG
 Project on Converting between EEG and ECoG
 
+## Assumption
+Python 3.10.x or higher \
+
+Miniconda enviornment [link](https://docs.anaconda.com/free/miniconda/miniconda-install/)
+
+Example:
+`conda create -n "env_name" python=3.10.0`
+
 ## Setup
-pip install -r requirements.txt
 
-## Data Preprocess
-utils/data_preprocessing.py: PCA and whitening
+environment: `pip install -r requirements.txt` \
+Dataset [link](http://www.www.neurotycho.org/expdatalist/listview?task=45)
 
-## ML models
-models/linear_regression_model.py: Linear regression training on raw data from ecog to eeg
-models/transformer.py: transformer model training on raw data from ecog to eeg
+We specifically used `20110607S2/EEG05_anesthesia.mat` and `20110607S2/ECoG05_anesthesia.mat` to train our model
 
-## Visualizing
-Visualizing/graphs.py: Graphing the signals for preprocessing
-Visualizing/heatmap.py: Graphing the signals in heatmap for bigger view windows
+## Run Code
 
-## GUI
-gui/gui.py
+### Train our model
+`python model_eval.py --eeg_path "your relative path" --ecog_path "your relative path" --output_root "root path for graph"`
+
+other optional arguments: \
+--optim sgd or --optim adam (for different optimizer functions)\
+--epoch `int` (for desired number of epochs)\
+--lr `float` (for desired learning rate) \
+--nesterov (set the flag to enable nesterov momentum with value=0.9)
+
+Output graphs will be stored in output_root folder that is inputed
+
+### Sanity Check Codes
+`python sanity_checks.py --all`
+
+or
+
+`python sanity_checks.py --test whitening`
+
+other options for `--test` argument: \
+[whitening, filtering, sinetosine, ecogtoagg]
+
+### GUI
+`python gui/gui/py`
+
+You can run a model by importing csv file and save the result by clicking save file.
+
+## File Structure
+data/ where our data for sanity check is lying \
+gui/ GUI \
+models/ different versions and types of models \
+output/ primary output directory of our graphs \
+utils/ dataloading and data preprocessing codes \
+visualizing/ graphing \
+
+model_eval.py: training our model \
+sanity_checks.py: test file

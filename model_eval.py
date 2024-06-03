@@ -22,11 +22,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--eeg_path', type=str, default="../Datasets/20110607S2_EEGandECoG_Su_Oosugi_ECoG128-EEG18/20110607S2_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/EEG05_anesthesia.mat")
     parser.add_argument('--ecog_path', type=str, default="../Datasets/20110607S2_EEGandECoG_Su_Oosugi_ECoG128-EEG18/20110607S2_EEGECoG_Su_Oosugi_ECoG128-EEG18_mat/ECoG05_anesthesia.mat")
+    parser.add_argument('--output_root', type=str, default='output')
     parser.add_argument('--optim', type=str, default="sgd")  # [sgd, adam]
     parser.add_argument('--nesterov', action='store_true')
-    parser.add_argument('--lr', type=int, default=1e-3)
+    parser.add_argument('--lr', type=float, default=1e-3)
     parser.add_argument('--epoch', type=int, default=20)
-    parser.add_argument('--output_root', type=str, default='output')
     args = parser.parse_args()
 
     # Get cpu, gpu or mps device for training.
