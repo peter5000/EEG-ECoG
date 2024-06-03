@@ -45,7 +45,7 @@ This notebook provides the best example of how to use the models/transformer_mod
 You will need to download the dataset from the website (http://www.www.neurotycho.org/expdatalist/listview?task=45) if you are training the model. (Our GitHub repo has limited storage to hold all these data.)\
 You can also restore the fine-tuned weights from output\transfomer_weights to predict outputs, without the need of training model.
 
-Check out models\transformer_EECoG_20min_twoMonkey.ipynb and models\transformer_EECoG_synth.ipynb for the transformer model performance on the other monkey's datasets and synthetic dataset.
+Check out models\transformer_EECoG_20min_twoMonkey.ipynb and models\transformer_EECoG_synth.ipynb for the transformer model performance on the other monkey's datasets and synthetic dataset, along with hyperparameter tuning on the validation set.
 
 ### GUI
 `python gui/gui/py`
