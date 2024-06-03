@@ -89,8 +89,8 @@ def whitening(data):
     # Sorting eig_vecs from smallest eiv_val to largest
     indices = np.argsort(eig_val)[::-1]
     eig_val = eig_val[indices]
-    print(eig_val)
-    print(eig_vec)
+    # print(eig_val)
+    # print(eig_vec)
     eig_vec = eig_vec[:,indices]
 
     return (np.diag(1/eig_val) ** (0.5))@eig_vec.T@data.T
