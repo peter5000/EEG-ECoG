@@ -54,7 +54,7 @@ You can run a model by importing csv file and save the result by clicking save f
 
 ## File Structure
 data/ where our data for sanity check is lying\
-gui/ GUI\ 
+gui/ GUI \ 
 models/ different versions and types of models\ 
 output/ primary output directory of our graphs\ 
 utils/ dataloading and data preprocessing codes\ 
