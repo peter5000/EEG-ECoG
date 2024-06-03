@@ -10,7 +10,7 @@ class TransformerDataset(Dataset):
         data = data.to(device)
 
         # Positional encoding across *location*: this lib encodes along the last dimension
-        summer = Summer(PositionalEncoding1D(ECoG_ELECTRODES)).to(device)
+        summer = Summer(PositionalEncoding1D(data.size(1))).to(device)
         pre_data = summer(data.unsqueeze(1))
 
         # Transformer implementation expects (batch, electrode, time) for electrode encoding
